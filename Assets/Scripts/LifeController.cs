@@ -78,6 +78,12 @@ public class LifeController : MonoBehaviour
         {
             for (int y = 0; y < gridManager.Height; ++y)
             {
+                if (gridManager.IsWall(x, y))
+                {
+                    newGrid[x, y] = false;
+                    continue;
+                }
+                
                 RuleZone zone = zoneManager.GetZoneForCell(x, y);
                 int minSurvive = zone != null ? zone.minSurviveNeighbors : defaultRules.minSurviveNeighbors;
                 int maxSurvive = zone != null ? zone.maxSurviveNeighbors : defaultRules.maxSurviveNeighbors;
@@ -102,7 +108,10 @@ public class LifeController : MonoBehaviour
         {
             for (int y = 0; y < gridManager.Height; ++y)
             {
-                gridManager.SetCellState(x, y, newGrid[x, y]);
+                if (!gridManager.IsWall(x, y))
+                {
+                    gridManager.SetCellState(x, y, newGrid[x, y]);
+                }
             }
         }
     }
@@ -124,6 +133,9 @@ public class LifeController : MonoBehaviour
                 {
                     continue;
                 }
+                
+                if (gridManager.IsWall(checkX, checkY))
+                    continue;
 
                 if (gridManager.Grid[checkX, checkY])
                 {
@@ -133,11 +145,5 @@ public class LifeController : MonoBehaviour
         }
 
         return count;
-    }
-
-    [ContextMenu("Recreate Grid")]
-    public void RecreateGrid()
-    {
-        gridManager.RecreateGrid();
     }
 }

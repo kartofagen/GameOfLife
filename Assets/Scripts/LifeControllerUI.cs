@@ -22,12 +22,7 @@ public class LifeControllerUI : MonoBehaviour
         lifeController = GetComponent<LifeController>();
         gridManager = GetComponent<GridManager>();
         
-        updateIntervalSlider.minValue = 0.01f;
-        updateIntervalSlider.maxValue = 2.0f;
         updateIntervalSlider.value = lifeController.UpdateInterval;
-        
-        randomFillSlider.minValue = 0f;
-        randomFillSlider.maxValue = 1f;
         randomFillSlider.value = lifeController.RandomFillShare;
         
         updateIntervalSlider.onValueChanged.AddListener(OnUpdateIntervalChanged);
@@ -69,7 +64,6 @@ public class LifeControllerUI : MonoBehaviour
 
     private void OnRandomFillToggleChanged(bool isOn)
     {
-        // Можно добавить логику для немедленного применения или просто сохранить настройку
         if (isOn)
         {
             lifeController.RandomizeGrid();
