@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5295982714441554526}
   - component: {fileID: 5220465949502059224}
   m_Layer: 0
-  m_Name: Hexagon Flat Top
+  m_Name: cockroach
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
