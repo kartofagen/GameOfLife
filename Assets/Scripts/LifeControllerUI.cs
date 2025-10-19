@@ -95,5 +95,6 @@ public class LifeControllerUI : MonoBehaviour
     {
         UpdateSimulationButtonText();
         updateIntervalValueText.text = updateIntervalSlider.value.ToString("F2") + "s";
+        randomFillValueText.text = randomFillSlider.value.ToString("F0") + "%";
     }
 }

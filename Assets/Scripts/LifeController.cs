@@ -4,7 +4,7 @@ public class LifeController : MonoBehaviour
 {
     [SerializeField][Range(0.001f, 1f)] private float updateInterval = 0.1f;
     [SerializeField][Range(0, 1f)] private float randomFillShare = 0.5f;
-    [SerializeField] private SimulationRules defaultRules = new SimulationRules();
+    [SerializeField] private RuleZone defaultRules;
 
     private GridManager gridManager;
     private RuleZoneManager zoneManager;
