@@ -15,8 +15,6 @@ public class InputHandler : MonoBehaviour
     private RuleZone currentDrawingZone = null;
     private bool isDrawingZone = false;
 
-    private int selectedStructureIndex = -1;
-
     public void Initialize(Camera camera, GridManager gridManager, RuleZoneManager zoneManager, LifeController lifeController)
     {
         mainCamera = camera;

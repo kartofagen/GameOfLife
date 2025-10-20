@@ -84,13 +84,15 @@ public class LifeController : MonoBehaviour
 
     private void OnMouseRightClick(Vector2 mousePosition)
     {
+        if (gridManager.IsPlacingStructure)
+        {
+            gridManager.CancelStructurePlacement();
+            return;
+        }
+        
         Vector2 worldPos = inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
-        
-        if (!gridManager.IsPlacingStructure)
-        {
-            gridManager.SetCellState(gridPos.x, gridPos.y, false);
-        }
+        gridManager.SetCellState(gridPos.x, gridPos.y, false);
     }
     
     private Vector2Int WorldToGridPosition(Vector2 worldPosition)

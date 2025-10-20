@@ -58,7 +58,7 @@ public class StructureSelectionUI : MonoBehaviour
         if (gridManager.IsPlacingStructure)
         {
             StructureData currentStructure = gridManager.AvailableStructures[GetCurrentStructureIndex()];
-            currentStructureText.text = $"Placing: {currentStructure.structureName}\nPress R to rotate, ESC to cancel";
+            currentStructureText.text = $"Placing: {currentStructure.structureName}\nPress R to rotate, Right Click to cancel";
         }
         else
         {

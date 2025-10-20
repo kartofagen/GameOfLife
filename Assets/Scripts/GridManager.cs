@@ -123,7 +123,7 @@ public class GridManager : MonoBehaviour
         if (cellObjects[x, y] == null) return;
 
         LifeAnimation manager = cellObjects[x, y].GetComponent<LifeAnimation>();
-        if (GetComponent<Renderer>() != null)
+        if (manager != null)
         {
             if (!walls[x, y])
             {
@@ -351,10 +351,9 @@ public class GridManager : MonoBehaviour
         int structureWidth = rotatedCells.GetLength(0);
         int structureHeight = rotatedCells.GetLength(1);
 
-        // Place the structure
-        for (int x = 0; x < structureWidth; x++)
+        for (int x = 0; x < structureWidth; ++x)
         {
-            for (int y = 0; y < structureHeight; y++)
+            for (int y = 0; y < structureHeight; ++y)
             {
                 if (rotatedCells[x, y])
                 {

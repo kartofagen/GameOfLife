@@ -95,14 +95,18 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8165857772603870911}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 06902ae52c72f8d458cec2596a04130c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  birthAnimationDuration: 0.3
-  deathAnimationDuration: 0.3
-  birthMaterial: {fileID: 0}
-  aliveMaterial: {fileID: 0}
-  deathMaterial: {fileID: 0}
-  deadMaterial: {fileID: 0}
+  birthAnimationDuration: 0.15
+  growAnimationDuration: 0.15
+  deathAnimationDuration: 0.15
+  death2AnimationDuration: 0.15
+  birthSprite: {fileID: 5364075792921141791, guid: 96ffe7b90eb8a4c48ad14bd4da52ad81, type: 3}
+  growSprite: {fileID: -5643105228771564274, guid: 25b10c2779dac0846bec4adc6ebb7b7a, type: 3}
+  aliveSprite: {fileID: 7145198348311737387, guid: 848443ea2c491644faccd3395fc1aed3, type: 3}
+  deathSprite: {fileID: -1257646769918371534, guid: 58aa3768d77dab44b9feea7b9633c48d, type: 3}
+  death2Sprite: {fileID: -3103083122143322500, guid: 40a21593ffbe2c443be05f8812bfac3d, type: 3}
+  deadSprite: {fileID: 0}
