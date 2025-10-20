@@ -3939,7 +3939,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1151442702}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -32, y: -32, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5099,6 +5099,9 @@ MonoBehaviour:
   wallsSource: {fileID: 1151442702}
   availableStructures:
   - {fileID: 11400000, guid: 87340144f846f9c4abdd57db69e6fcba, type: 2}
+  - {fileID: 11400000, guid: e1bb6b0cdc331fc488156c83507b1452, type: 2}
+  - {fileID: 11400000, guid: 6f42ab60ba92fc44b8e1c02862422e91, type: 2}
+  - {fileID: 11400000, guid: 874901a704fb774438a87cc0a72748a1, type: 2}
   structurePreviewMaterial: {fileID: 2100000, guid: 6f4f5c11507ac5044b53f1845534daaf, type: 2}
 --- !u!114 &1529250827
 MonoBehaviour:
