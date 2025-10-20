@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -27,6 +28,7 @@ public class GridManager : MonoBehaviour
     private int structureRotation = 0;
     private List<GameObject> structurePreview = new List<GameObject>();
     private bool[,] currentStructureCells;
+    private float mouseCancelTime = 0.5f;
 
     public int Width => width;
     public int Height => height;
@@ -365,10 +367,16 @@ public class GridManager : MonoBehaviour
         }
 
         Debug.Log($"Structure '{currentStructure.structureName}' placed at ({gridPosition.x}, {gridPosition.y})");
-        CancelStructurePlacement();
+        StartCoroutine(WaitForCancel());
         return true;
     }
-    
+
+    private IEnumerator WaitForCancel()
+    {
+        yield return new WaitForSeconds(mouseCancelTime);
+        CancelStructurePlacement();
+    }
+
     private void ClearStructurePreview()
     {
         foreach (GameObject preview in structurePreview)

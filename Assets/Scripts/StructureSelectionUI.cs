@@ -16,7 +16,7 @@ public class StructureSelectionUI : MonoBehaviour
 
     private void Start()
     {
-        gridManager = FindObjectOfType<GridManager>();
+        gridManager = GetComponent<GridManager>();
         CreateStructureButtons();
         UpdateCurrentStructureText();
     }
