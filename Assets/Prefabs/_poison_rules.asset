@@ -9,11 +9,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4005fa455a5d4fe4e835325fe7baebee, type: 3}
-  m_Name: TrapRules
+  m_Script: {fileID: 11500000, guid: 3726d9587b98f324fb0feda973a29513, type: 3}
+  m_Name: _poison_rules
   m_EditorClassIdentifier: 
-  zoneName: New Zone
+  structureName: Poison
+  width: 5
+  height: 5
+  description: 
+  pattern: '..X..
+
+    .XXX.
+
+    XXXXX
+
+    .XXX.
+
+    ..X..'
   minSurviveNeighbors: 2
   maxSurviveNeighbors: 3
   reproduceNeighbors: 3
-  zoneColor: {r: 0.98203206, g: 1, b: 0, a: 0.3}
+  zoneColor: {r: 1, g: 0, b: 0.95856094, a: 0.3}

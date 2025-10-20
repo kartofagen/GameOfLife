@@ -30,7 +30,6 @@ public class LifeControllerUI : MonoBehaviour
         randomFillToggle.onValueChanged.AddListener(OnRandomFillToggleChanged);
         randomFillSlider.onValueChanged.AddListener(OnRandomFillSliderChanged);
         
-        
         UpdateUI();
     }
 

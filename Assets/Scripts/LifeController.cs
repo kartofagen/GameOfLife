@@ -57,27 +57,22 @@ public class LifeController : MonoBehaviour
             gridManager.RotateStructure();
     }
     
-    private void OnMouseMove(Vector2 mousePosition)
-    {
-        if (gridManager.IsPlacingStructure)
-        {
-            Vector2 worldPos = inputHandler.GetMouseWorldPosition();
-            Vector2Int gridPos = WorldToGridPosition(worldPos);
-            gridManager.UpdateStructurePreview(gridPos);
-        }
-    }
-
     private void OnMouseClick(Vector2 mousePosition)
     {
         Vector2 worldPos = inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
-        
+    
         if (gridManager.IsPlacingStructure)
         {
             gridManager.PlaceStructure(gridPos);
         }
+        else if (gridManager.IsPlacingZoneStructure)
+        {
+            gridManager.PlaceZoneStructure(gridPos);
+        }
         else
         {
+            // Default cell editing in Cells mode
             gridManager.SetCellState(gridPos.x, gridPos.y, true);
         }
     }
@@ -89,10 +84,32 @@ public class LifeController : MonoBehaviour
             gridManager.CancelStructurePlacement();
             return;
         }
-        
+        else if (gridManager.IsPlacingZoneStructure)
+        {
+            gridManager.CancelZoneStructurePlacement();
+            return;
+        }
+    
+        // Default cell editing in Cells mode
         Vector2 worldPos = inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
         gridManager.SetCellState(gridPos.x, gridPos.y, false);
+    }
+
+    private void OnMouseMove(Vector2 mousePosition)
+    {
+        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+        Vector2Int gridPos = WorldToGridPosition(worldPos);
+    
+        // Update preview for both structures and zones
+        if (gridManager.IsPlacingStructure)
+        {
+            gridManager.UpdateStructurePreview(gridPos);
+        }
+        else if (gridManager.IsPlacingZoneStructure)
+        {
+            gridManager.UpdateZoneStructurePreview(gridPos);
+        }
     }
     
     private Vector2Int WorldToGridPosition(Vector2 worldPosition)
@@ -136,7 +153,8 @@ public class LifeController : MonoBehaviour
                     newGrid[x, y] = false;
                     continue;
                 }
-                
+            
+                // Get zone for cell - this now uses the properly managed zones
                 RuleZone zone = zoneManager.GetZoneForCell(x, y);
                 int minSurvive = zone != null ? zone.minSurviveNeighbors : defaultRules.minSurviveNeighbors;
                 int maxSurvive = zone != null ? zone.maxSurviveNeighbors : defaultRules.maxSurviveNeighbors;
@@ -148,7 +166,7 @@ public class LifeController : MonoBehaviour
                 if (isAlive)
                 {
                     newGrid[x, y] = liveNeighbors >= minSurvive && 
-                                   liveNeighbors <= maxSurvive;
+                                    liveNeighbors <= maxSurvive;
                 }
                 else
                 {
@@ -157,6 +175,7 @@ public class LifeController : MonoBehaviour
             }
         }
 
+        // Apply new generation
         for (int x = 0; x < gridManager.Width; ++x)
         {
             for (int y = 0; y < gridManager.Height; ++y)

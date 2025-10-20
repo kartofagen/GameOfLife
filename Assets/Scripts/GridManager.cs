@@ -18,6 +18,10 @@ public class GridManager : MonoBehaviour
     [Header("Structures")]
     [SerializeField] private List<StructureData> availableStructures = new List<StructureData>();
     [SerializeField] private Material structurePreviewMaterial;
+    
+    [Header("Zone Structures")]
+    [SerializeField] private List<ZoneStructureData> availableZoneStructures = new List<ZoneStructureData>();
+    [SerializeField] private Material zoneStructurePreviewMaterial;
 
     private bool[,] grid;
     private GameObject[,] cellObjects;
@@ -30,11 +34,19 @@ public class GridManager : MonoBehaviour
     private bool[,] currentStructureCells;
     private float mouseCancelTime = 0.5f;
 
+    private ZoneStructureData currentZoneStructure = null;
+    private bool isPlacingZoneStructure = false;
+    private List<GameObject> zoneStructurePreview = new List<GameObject>();
+    private bool[,] currentZoneStructureCells;
+
     public int Width => width;
     public int Height => height;
     public float CellSize => cellSize;
     public bool[,] Grid => grid;
     public List<StructureData> AvailableStructures => availableStructures;
+
+    public bool IsPlacingZoneStructure => isPlacingZoneStructure;
+    public List<ZoneStructureData> AvailableZoneStructures => availableZoneStructures;
 
     public void InitializeGrid()
     {
@@ -405,4 +417,125 @@ public class GridManager : MonoBehaviour
     }
 
     public bool IsPlacingStructure => isPlacingStructure;
+    
+    public void StartZoneStructurePlacement(ZoneStructureData zoneStructure)
+    {
+        if (isPlacingZoneStructure)
+            CancelZoneStructurePlacement();
+
+        if (zoneStructure == null)
+        {
+            Debug.LogError("Cannot place null zone structure!");
+            return;
+        }
+
+        zoneStructure.InitializeCells();
+        
+        if (zoneStructure.cells == null)
+        {
+            Debug.LogError($"Zone Structure {zoneStructure.structureName} has null cells array!");
+            return;
+        }
+
+        currentZoneStructure = zoneStructure;
+        currentZoneStructureCells = zoneStructure.cells;
+        isPlacingZoneStructure = true;
+        
+        Debug.Log($"Placing zone structure: {zoneStructure.structureName} ({zoneStructure.width}x{zoneStructure.height})");
+    }
+
+    public void UpdateZoneStructurePreview(Vector2Int gridPosition)
+    {
+        ClearZoneStructurePreview();
+
+        if (!isPlacingZoneStructure || currentZoneStructure == null || currentZoneStructureCells == null) return;
+
+        // Use RuleZoneManager for temporary visualization
+        RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+        if (zoneManager != null)
+        {
+            zoneManager.UpdateTemporaryZoneVisual(currentZoneStructure, gridPosition);
+        }
+    }
+
+    private bool IsZoneStructurePlacementValid(Vector2Int gridPosition)
+    {
+        if (currentZoneStructure == null || currentZoneStructureCells == null) return false;
+
+        int structureWidth = currentZoneStructureCells.GetLength(0);
+        int structureHeight = currentZoneStructureCells.GetLength(1);
+
+        for (int x = 0; x < structureWidth; x++)
+        {
+            for (int y = 0; y < structureHeight; y++)
+            {
+                if (currentZoneStructureCells[x, y])
+                {
+                    int worldX = gridPosition.x + x - structureWidth / 2;
+                    int worldY = gridPosition.y + y - structureHeight / 2;
+
+                    if (worldX < 0 || worldX >= width || worldY < 0 || worldY >= height || walls[worldX, worldY])
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    public bool PlaceZoneStructure(Vector2Int gridPosition)
+    {
+        if (!isPlacingZoneStructure || currentZoneStructure == null || currentZoneStructureCells == null) 
+        {
+            Debug.LogError("Cannot place zone structure - invalid state");
+            return false;
+        }
+
+        // Check placement validity using RuleZoneManager
+        RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+        if (zoneManager == null || !zoneManager.IsZonePlacementValid(currentZoneStructure, gridPosition))
+        {
+            Debug.LogWarning("Cannot place zone structure here - invalid position or overlaps with existing zone");
+            return false;
+        }
+
+        // Use RuleZoneManager to create and add the zone
+        zoneManager.UpdateZoneFromStructure(currentZoneStructure, gridPosition);
+
+        Debug.Log($"Zone structure '{currentZoneStructure.structureName}' placed at ({gridPosition.x}, {gridPosition.y})");
+        StartCoroutine(WaitForZoneCancel());
+        return true;
+    }
+
+    private IEnumerator WaitForZoneCancel()
+    {
+        yield return new WaitForSeconds(mouseCancelTime);
+        CancelZoneStructurePlacement();
+    }
+
+    private void ClearZoneStructurePreview()
+    {
+        foreach (GameObject preview in zoneStructurePreview)
+        {
+            if (preview != null) Destroy(preview);
+        }
+        zoneStructurePreview.Clear();
+    }
+
+    public void CancelZoneStructurePlacement()
+    {
+        // Clear temporary visuals from RuleZoneManager
+        RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+        if (zoneManager != null)
+        {
+            zoneManager.ClearTemporaryZoneVisual();
+        }
+
+        currentZoneStructure = null;
+        currentZoneStructureCells = null;
+        isPlacingZoneStructure = false;
+        ClearZoneStructurePreview();
+        Debug.Log("Zone structure placement canceled");
+    }
 }
