@@ -10,8 +10,6 @@ public class GridManager : MonoBehaviour
 
     [Header("Prefabs & Materials")]
     [SerializeField] private GameObject cellPrefab;
-    [SerializeField] private Color aliveColor;
-    [SerializeField] private Color deadColor;
     
     [Header("Walls Settings")]
     [SerializeField] private GameObject wallsSource;
@@ -24,7 +22,6 @@ public class GridManager : MonoBehaviour
     private GameObject[,] cellObjects;
     private bool[,] walls;
 
-    // Structure placement
     private StructureData currentStructure = null;
     private bool isPlacingStructure = false;
     private int structureRotation = 0;
@@ -125,12 +122,12 @@ public class GridManager : MonoBehaviour
     {
         if (cellObjects[x, y] == null) return;
 
-        Renderer renderer = cellObjects[x, y].GetComponent<Renderer>();
-        if (renderer != null)
+        LifeAnimation manager = cellObjects[x, y].GetComponent<LifeAnimation>();
+        if (GetComponent<Renderer>() != null)
         {
             if (!walls[x, y])
             {
-                renderer.material.color = grid[x, y] ? aliveColor : deadColor;
+                manager.SetAlive(grid[x, y]);
             }
         }
     }
@@ -205,7 +202,6 @@ public class GridManager : MonoBehaviour
             return;
         }
 
-        // Инициализируем клетки структуры
         structure.InitializeCells();
         
         if (structure.cells == null)
@@ -215,7 +211,7 @@ public class GridManager : MonoBehaviour
         }
 
         currentStructure = structure;
-        currentStructureCells = structure.cells; // Кэшируем
+        currentStructureCells = structure.cells;
         isPlacingStructure = true;
         structureRotation = 0;
         
@@ -233,10 +229,10 @@ public class GridManager : MonoBehaviour
 
         return structureRotation switch
         {
-            0 => original, // 0°
-            1 => RotateMatrix(original, true), // 90° clockwise
-            2 => RotateMatrix(RotateMatrix(original, true), true), // 180°
-            3 => RotateMatrix(original, false), // 90° counter-clockwise
+            0 => original,
+            1 => RotateMatrix(original, true),
+            2 => RotateMatrix(RotateMatrix(original, true), true),
+            3 => RotateMatrix(original, false),
             _ => original
         };
     }
@@ -280,7 +276,6 @@ public class GridManager : MonoBehaviour
                     int worldX = gridPosition.x + x - structureWidth / 2;
                     int worldY = gridPosition.y + y - structureHeight / 2;
 
-                    // Check if position is valid
                     if (worldX >= 0 && worldX < width && worldY >= 0 && worldY < height && !walls[worldX, worldY])
                     {
                         Vector3 position = transform.position + new Vector3(worldX * cellSize, worldY * cellSize, -0.1f);
@@ -289,15 +284,12 @@ public class GridManager : MonoBehaviour
                         previewCell.transform.position = position;
                         previewCell.transform.localScale = Vector3.one * cellSize * 0.8f;
 
-                        // Remove collider
                         Collider collider = previewCell.GetComponent<Collider>();
                         if (collider != null) Destroy(collider);
 
-                        // Set preview material
                         Renderer renderer = previewCell.GetComponent<Renderer>();
                         Material previewMat = new Material(structurePreviewMaterial);
                         
-                        // Use different color based on validity
                         bool isValid = IsStructurePlacementValid(gridPosition);
                         Color previewColor = isValid ? 
                             new Color(0.2f, 0.8f, 0.2f, 0.6f) : // Green if valid

@@ -8,7 +8,7 @@ public class LifeController : MonoBehaviour
 
     private GridManager gridManager;
     private RuleZoneManager zoneManager;
-    private InputHandler inputHandler;
+    private InputActionsHandler inputHandler;
 
     private bool isSimulating = false;
     private float timer = 0f;
@@ -21,18 +21,16 @@ public class LifeController : MonoBehaviour
     {
         gridManager = GetComponent<GridManager>();
         zoneManager = GetComponent<RuleZoneManager>();
-        inputHandler = GetComponent<InputHandler>();
+        inputHandler = GetComponent<InputActionsHandler>();
 
         gridManager.InitializeGrid();
         gridManager.CreateVisualGrid();
         zoneManager.Initialize(gridManager);
-        inputHandler.Initialize(Camera.main, gridManager, zoneManager, this);
+        SetupInputHandlers();
     }
 
     private void Update()
     {
-        inputHandler.HandleInput();
-        
         if (!isSimulating) return;
 
         timer += Time.deltaTime;
@@ -43,16 +41,69 @@ public class LifeController : MonoBehaviour
             gridManager.UpdateGridVisuals();
         }
     }
+    
+    private void SetupInputHandlers()
+    {
+        inputHandler.onToggleSimulation.AddListener(ToggleSimulation);
+        inputHandler.onRotateStructure.AddListener(OnRotateStructure);
+        inputHandler.onMouseMove.AddListener(OnMouseMove);
+        inputHandler.onMouseClick.AddListener(OnMouseClick);
+        inputHandler.onMouseRightClick.AddListener(OnMouseRightClick);
+    }
+    
+    private void OnRotateStructure()
+    {
+        if (gridManager.IsPlacingStructure)
+            gridManager.RotateStructure();
+    }
+    
+    private void OnMouseMove(Vector2 mousePosition)
+    {
+        if (gridManager.IsPlacingStructure)
+        {
+            Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+            Vector2Int gridPos = WorldToGridPosition(worldPos);
+            gridManager.UpdateStructurePreview(gridPos);
+        }
+    }
+
+    private void OnMouseClick(Vector2 mousePosition)
+    {
+        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+        Vector2Int gridPos = WorldToGridPosition(worldPos);
+        
+        if (gridManager.IsPlacingStructure)
+        {
+            gridManager.PlaceStructure(gridPos);
+        }
+        else
+        {
+            gridManager.SetCellState(gridPos.x, gridPos.y, true);
+        }
+    }
+
+    private void OnMouseRightClick(Vector2 mousePosition)
+    {
+        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+        Vector2Int gridPos = WorldToGridPosition(worldPos);
+        
+        if (!gridManager.IsPlacingStructure)
+        {
+            gridManager.SetCellState(gridPos.x, gridPos.y, false);
+        }
+    }
+    
+    private Vector2Int WorldToGridPosition(Vector2 worldPosition)
+    {
+        Vector3 localPos = worldPosition - (Vector2)transform.position;
+        int x = Mathf.RoundToInt(localPos.x / gridManager.CellSize);
+        int y = Mathf.RoundToInt(localPos.y / gridManager.CellSize);
+        return new Vector2Int(x, y);
+    }
 
     public void RandomizeGrid()
     {
         gridManager.RandomizeGrid(randomFillShare);
-    }
-
-    public void StartSimulation()
-    {
-        isSimulating = true;
-        Debug.Log("Simulation Started");
     }
 
     public void ToggleSimulation()

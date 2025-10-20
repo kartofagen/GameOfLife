@@ -5025,7 +5025,7 @@ GameObject:
   - component: {fileID: 1529250823}
   - component: {fileID: 1529250822}
   - component: {fileID: 1529250826}
-  - component: {fileID: 1529250825}
+  - component: {fileID: 1529250829}
   - component: {fileID: 1529250824}
   - component: {fileID: 1529250827}
   - component: {fileID: 1529250828}
@@ -5080,22 +5080,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoneMaterial: {fileID: 2100000, guid: bba5464ce6a576747be21bf2aa9a4119, type: 2}
   ruleZones: []
---- !u!114 &1529250825
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1529250821}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c784e99d752ac68419791cd838dc19ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  useRaycast: 1
 --- !u!114 &1529250826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5112,8 +5096,6 @@ MonoBehaviour:
   height: 64
   cellSize: 1
   cellPrefab: {fileID: 8165857772603870911, guid: 2f2f2dae326d61644bb77505a78745bc, type: 3}
-  aliveColor: {r: 1, g: 1, b: 1, a: 1}
-  deadColor: {r: 0, g: 0, b: 0, a: 0}
   wallsSource: {fileID: 1151442702}
   availableStructures:
   - {fileID: 11400000, guid: 87340144f846f9c4abdd57db69e6fcba, type: 2}
@@ -5154,6 +5136,34 @@ MonoBehaviour:
   structureButtonContainer: {fileID: 632515416}
   currentStructureText: {fileID: 975252236}
   structurePanel: {fileID: 585706486}
+--- !u!114 &1529250829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1529250821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9aa01db81094e44b94bfcfa3aaae475, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputActions: {fileID: -944628639613478452, guid: 2706e9a25adb1304f839b15ba84ea03b, type: 3}
+  onToggleSimulation:
+    m_PersistentCalls:
+      m_Calls: []
+  onRotateStructure:
+    m_PersistentCalls:
+      m_Calls: []
+  onMouseMove:
+    m_PersistentCalls:
+      m_Calls: []
+  onMouseClick:
+    m_PersistentCalls:
+      m_Calls: []
+  onMouseRightClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1540690853
 GameObject:
   m_ObjectHideFlags: 0
