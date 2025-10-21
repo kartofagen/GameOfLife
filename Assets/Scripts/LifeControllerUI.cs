@@ -13,18 +13,18 @@ public class LifeControllerUI : MonoBehaviour
     [SerializeField] private Slider randomFillSlider;
     [SerializeField] private TextMeshProUGUI randomFillValueText;
     [SerializeField] private TextMeshProUGUI aliveCellsText; 
-    [SerializeField] private Button competitionModeButton; // Добавлено
-    [SerializeField] private TextMeshProUGUI competitionButtonText; // Добавлено
+    [SerializeField] private Button tournamentModeButton;
+    [SerializeField] private TextMeshProUGUI tournamentButtonText;
 
     private LifeController lifeController;
     private GridManager gridManager;
-    private CompetitionManager competitionManager; // Добавлено
+    private TournamentManager tournamentManager;
 
     private void Start()
     {
         lifeController = GetComponent<LifeController>();
         gridManager = GetComponent<GridManager>();
-        competitionManager = GetComponent<CompetitionManager>(); // Добавлено
+        tournamentManager = GetComponent<TournamentManager>();
         
         updateIntervalSlider.value = lifeController.UpdateInterval;
         randomFillSlider.value = lifeController.RandomFillShare;
@@ -34,10 +34,10 @@ public class LifeControllerUI : MonoBehaviour
         randomFillToggle.onValueChanged.AddListener(OnRandomFillToggleChanged);
         randomFillSlider.onValueChanged.AddListener(OnRandomFillSliderChanged);
         
-        if (competitionModeButton != null)
+        if (tournamentModeButton != null)
         {
-            competitionModeButton.onClick.AddListener(OnCompetitionModeButtonClicked);
-            UpdateCompetitionButtonText();
+            tournamentModeButton.onClick.AddListener(OnTournamentModeButtonClicked);
+            UpdateTournamentButtonText();
         }
         
         UpdateUI();
@@ -48,18 +48,26 @@ public class LifeControllerUI : MonoBehaviour
         UpdateAliveCellsCount();
     }
     
-    private void OnCompetitionModeButtonClicked()
+    private void OnTournamentModeButtonClicked()
     {
-        competitionManager.ToggleCompetitionMode();
-        UpdateCompetitionButtonText();
+        if (tournamentManager.TournamentMode)
+        {
+            tournamentManager.EndTournament();
+        }
+        else
+        {
+            tournamentManager.StartTournament();
+        }
+
+        UpdateTournamentButtonText();
     }
 
-    private void UpdateCompetitionButtonText()
+    private void UpdateTournamentButtonText()
     {
-        if (competitionButtonText != null)
+        if (tournamentButtonText != null)
         {
-            competitionButtonText.text = competitionManager.CompetitionMode ? 
-                "Free Mode" : "Competition Mode";
+            tournamentButtonText.text = tournamentManager.TournamentMode ? 
+                "Free Mode" : "Tournament";
         }
     }
 
@@ -110,7 +118,7 @@ public class LifeControllerUI : MonoBehaviour
         aliveCellsText.text = $"Alive Cells: {aliveCount}";
     }
 
-    private void UpdateSimulationButtonText()
+    public void UpdateSimulationButtonText()
     {
         simulationButtonText.text = lifeController.IsSimulating ? "Pause" : "Start";
     }

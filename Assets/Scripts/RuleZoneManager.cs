@@ -18,7 +18,6 @@ public class RuleZoneManager : MonoBehaviour
     {
         this.gridManager = gridManager;
         
-        // Initialize zone cells arrays for existing zones
         foreach (var zone in ruleZones)
         {
             if (zone.zoneCells == null || zone.zoneCells.Length == 0)
@@ -32,14 +31,12 @@ public class RuleZoneManager : MonoBehaviour
     {
         if (zone == null || gridManager == null) return;
 
-        // Clear existing visuals
         foreach (GameObject visual in zone.zoneVisuals)
         {
             if (visual != null) Destroy(visual);
         }
         zone.zoneVisuals.Clear();
 
-        // Create new visuals
         for (int x = 0; x < gridManager.Width; ++x)
         {
             for (int y = 0; y < gridManager.Height; ++y)

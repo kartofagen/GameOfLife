@@ -9,6 +9,7 @@ public class LifeController : MonoBehaviour
     private GridManager gridManager;
     private RuleZoneManager zoneManager;
     private InputActionsHandler inputHandler;
+    private TournamentManager tournamentManager;
 
     private bool isSimulating = false;
     private float timer = 0f;
@@ -17,14 +18,12 @@ public class LifeController : MonoBehaviour
     public float UpdateInterval => updateInterval;
     public float RandomFillShare => randomFillShare;
 
-    private CompetitionManager competitionManager;
-
     private void Start()
     {
         gridManager = GetComponent<GridManager>();
         zoneManager = GetComponent<RuleZoneManager>();
         inputHandler = GetComponent<InputActionsHandler>();
-        competitionManager = GetComponent<CompetitionManager>();
+        tournamentManager = GetComponent<TournamentManager>();
 
         gridManager.InitializeGrid();
         gridManager.CreateVisualGrid();
@@ -64,55 +63,77 @@ public class LifeController : MonoBehaviour
     {
         Vector2 worldPos = inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
-    
-        if (gridManager.IsPlacingStructure)
+
+        // Проверяем турнирный режим
+        if (tournamentManager != null && tournamentManager.TournamentMode)
         {
-            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceCell())
+            if (tournamentManager.CurrentState == TournamentState.Player1Zones && 
+                gridManager.IsPlacingZoneStructure)
             {
-                if (gridManager.PlaceStructure(gridPos))
+                if (gridManager.PlaceZoneStructure(gridPos) && tournamentManager.CanPlaceZone())
                 {
-                    competitionManager?.OnCellPlaced(); // Добавлено
+                    tournamentManager.OnZonePlaced();
                 }
             }
-        }
-        else if (gridManager.IsPlacingZoneStructure)
-        {
-            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceZone())
+            else if (tournamentManager.CurrentState == TournamentState.Player2Cells)
             {
-                if (gridManager.PlaceZoneStructure(gridPos))
+                if (!gridManager.IsWall(gridPos.x, gridPos.y) && tournamentManager.CanPlaceCell())
                 {
-                    competitionManager?.OnZonePlaced(); // Добавлено
+                    gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                    tournamentManager.OnCellPlaced();
                 }
             }
         }
         else
         {
-            // Default cell editing in Cells mode
-            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceCell())
+            if (gridManager.IsPlacingStructure)
             {
+                gridManager.PlaceStructure(gridPos);
+            }
+            else if (gridManager.IsPlacingZoneStructure)
+            {
+                gridManager.PlaceZoneStructure(gridPos);
+            }
+            else
+            {
+                // Default cell editing in Cells mode
                 gridManager.SetCellState(gridPos.x, gridPos.y, true);
-                competitionManager?.OnCellPlaced(); // Добавлено
             }
         }
     }
 
     private void OnMouseRightClick(Vector2 mousePosition)
     {
-        if (gridManager.IsPlacingStructure)
+        // В турнирном режиме правый клик только для отмены размещения
+        if (tournamentManager != null && tournamentManager.TournamentMode)
         {
-            gridManager.CancelStructurePlacement();
-            return;
+            if (gridManager.IsPlacingStructure)
+            {
+                gridManager.CancelStructurePlacement();
+            }
+            else if (gridManager.IsPlacingZoneStructure)
+            {
+                gridManager.CancelZoneStructurePlacement();
+            }
         }
-        else if (gridManager.IsPlacingZoneStructure)
+        else
         {
-            gridManager.CancelZoneStructurePlacement();
-            return;
+            if (gridManager.IsPlacingStructure)
+            {
+                gridManager.CancelStructurePlacement();
+                return;
+            }
+            else if (gridManager.IsPlacingZoneStructure)
+            {
+                gridManager.CancelZoneStructurePlacement();
+                return;
+            }
+
+            // Default cell editing in Cells mode
+            Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+            Vector2Int gridPos = WorldToGridPosition(worldPos);
+            gridManager.SetCellState(gridPos.x, gridPos.y, false);
         }
-    
-        // Default cell editing in Cells mode
-        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
-        Vector2Int gridPos = WorldToGridPosition(worldPos);
-        gridManager.SetCellState(gridPos.x, gridPos.y, false);
     }
 
     private void OnMouseMove(Vector2 mousePosition)

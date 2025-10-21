@@ -19,12 +19,10 @@ public class StructuresUI : MonoBehaviour
     private GridManager gridManager;
     private List<GameObject> currentButtons = new List<GameObject>();
     private bool isInitialized = false;
-
-    private CompetitionManager competitionManager;
+    private TournamentManager tournamentManager;
 
     private void Start()
     {
-        competitionManager = GetComponent<CompetitionManager>();
         InitializeUI();
     }
 
@@ -33,12 +31,7 @@ public class StructuresUI : MonoBehaviour
         if (isInitialized) return;
 
         gridManager = GetComponent<GridManager>();
-        
-        if (gridManager == null)
-        {
-            Debug.LogError("GridManager not found in scene!");
-            return;
-        }
+        tournamentManager = GetComponent<TournamentManager>();
 
         cellsModeToggle.onValueChanged.AddListener(OnCellsModeToggled);
         zonesModeToggle.onValueChanged.AddListener(OnZonesModeToggled);
@@ -70,7 +63,7 @@ public class StructuresUI : MonoBehaviour
         }
     }
 
-    public void SetMode(PlacementMode mode)
+    private void SetMode(PlacementMode mode)
     {
         if (!isInitialized) return;
 
@@ -81,31 +74,6 @@ public class StructuresUI : MonoBehaviour
             gridManager.CancelZoneStructurePlacement();
 
         ClearButtons();
-
-        // В режиме соревнования показываем только соответствующие кнопки
-        if (competitionManager != null && competitionManager.CompetitionMode)
-        {
-            if (mode == PlacementMode.Zones)
-            {
-                CreateZoneButtons();
-            }
-            else if (mode == PlacementMode.Cells)
-            {
-                CreateStructureButtons();
-            }
-        }
-        else
-        {
-            // Обычный режим - показываем все кнопки
-            if (mode == PlacementMode.Zones)
-            {
-                CreateZoneButtons();
-            }
-            else if (mode == PlacementMode.Cells)
-            {
-                CreateStructureButtons();
-            }
-        }
     }
 
     private void CreateStructureButtons()
@@ -234,35 +202,9 @@ public class StructuresUI : MonoBehaviour
     {
         if (!isInitialized) return;
 
-        // Update UI in real-time based on placement state
         if (gridManager.IsPlacingStructure || gridManager.IsPlacingZoneStructure)
         {
             UpdateUI();
-        }
-
-        // Quick mode switching with number keys
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            cellsModeToggle.isOn = true;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            zonesModeToggle.isOn = true;
-        }
-
-        // Escape key to cancel placement
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (gridManager.IsPlacingStructure)
-            {
-                gridManager.CancelStructurePlacement();
-                UpdateUI();
-            }
-            else if (gridManager.IsPlacingZoneStructure)
-            {
-                gridManager.CancelZoneStructurePlacement();
-                UpdateUI();
-            }
         }
     }
 

@@ -32,7 +32,6 @@ public class GridManager : MonoBehaviour
     private int structureRotation = 0;
     private List<GameObject> structurePreview = new List<GameObject>();
     private bool[,] currentStructureCells;
-    private float mouseCancelTime = 0.5f;
 
     private ZoneStructureData currentZoneStructure = null;
     private bool isPlacingZoneStructure = false;
@@ -379,14 +378,7 @@ public class GridManager : MonoBehaviour
         }
 
         Debug.Log($"Structure '{currentStructure.structureName}' placed at ({gridPosition.x}, {gridPosition.y})");
-        StartCoroutine(WaitForCancel());
         return true;
-    }
-
-    private IEnumerator WaitForCancel()
-    {
-        yield return new WaitForSeconds(mouseCancelTime);
-        CancelStructurePlacement();
     }
 
     private void ClearStructurePreview()
@@ -486,6 +478,13 @@ public class GridManager : MonoBehaviour
 
     public bool PlaceZoneStructure(Vector2Int gridPosition)
     {
+        TournamentManager tournamentManager = GetComponent<TournamentManager>();
+        if (tournamentManager != null && tournamentManager.TournamentMode && 
+            !tournamentManager.CanPlaceZone())
+        {
+            return false;
+        }
+        
         if (!isPlacingZoneStructure || currentZoneStructure == null || currentZoneStructureCells == null) 
         {
             Debug.LogError("Cannot place zone structure - invalid state");
@@ -504,14 +503,7 @@ public class GridManager : MonoBehaviour
         zoneManager.UpdateZoneFromStructure(currentZoneStructure, gridPosition);
 
         Debug.Log($"Zone structure '{currentZoneStructure.structureName}' placed at ({gridPosition.x}, {gridPosition.y})");
-        StartCoroutine(WaitForZoneCancel());
         return true;
-    }
-
-    private IEnumerator WaitForZoneCancel()
-    {
-        yield return new WaitForSeconds(mouseCancelTime);
-        CancelZoneStructurePlacement();
     }
 
     private void ClearZoneStructurePreview()
