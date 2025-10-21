@@ -172,7 +172,7 @@ public class RuleZoneManager : MonoBehaviour
                     {
                         CreateZoneVisual(null, worldX, worldY, -0.2f, 
                             new Color(zoneStructure.zoneColor.r, zoneStructure.zoneColor.g, 
-                                    zoneStructure.zoneColor.b, 0.5f), true);
+                                      zoneStructure.zoneColor.b, zoneStructure.zoneColor.a + 0.3f), true);
                     }
                 }
             }
@@ -187,11 +187,9 @@ public class RuleZoneManager : MonoBehaviour
         zoneVisual.transform.position = position;
         zoneVisual.transform.localScale = Vector3.one * gridManager.CellSize * 0.9f;
 
-        // Remove collider
         Collider collider = zoneVisual.GetComponent<Collider>();
         if (collider != null) Destroy(collider);
 
-        // Set material and color
         Renderer renderer = zoneVisual.GetComponent<Renderer>();
         Material zoneMat = new Material(zoneMaterial);
         zoneMat.color = color;
@@ -218,7 +216,6 @@ public class RuleZoneManager : MonoBehaviour
         temporaryZoneVisuals.Clear();
     }
 
-    // Method to check if a position conflicts with existing zones
     public bool IsZonePlacementValid(ZoneStructureData zoneStructure, Vector2Int gridPosition)
     {
         if (zoneStructure == null || gridManager == null) return false;

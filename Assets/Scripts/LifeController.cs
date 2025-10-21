@@ -17,11 +17,14 @@ public class LifeController : MonoBehaviour
     public float UpdateInterval => updateInterval;
     public float RandomFillShare => randomFillShare;
 
+    private CompetitionManager competitionManager;
+
     private void Start()
     {
         gridManager = GetComponent<GridManager>();
         zoneManager = GetComponent<RuleZoneManager>();
         inputHandler = GetComponent<InputActionsHandler>();
+        competitionManager = GetComponent<CompetitionManager>();
 
         gridManager.InitializeGrid();
         gridManager.CreateVisualGrid();
@@ -64,16 +67,32 @@ public class LifeController : MonoBehaviour
     
         if (gridManager.IsPlacingStructure)
         {
-            gridManager.PlaceStructure(gridPos);
+            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceCell())
+            {
+                if (gridManager.PlaceStructure(gridPos))
+                {
+                    competitionManager?.OnCellPlaced(); // Добавлено
+                }
+            }
         }
         else if (gridManager.IsPlacingZoneStructure)
         {
-            gridManager.PlaceZoneStructure(gridPos);
+            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceZone())
+            {
+                if (gridManager.PlaceZoneStructure(gridPos))
+                {
+                    competitionManager?.OnZonePlaced(); // Добавлено
+                }
+            }
         }
         else
         {
             // Default cell editing in Cells mode
-            gridManager.SetCellState(gridPos.x, gridPos.y, true);
+            if (!competitionManager.CompetitionMode || competitionManager.CanPlaceCell())
+            {
+                gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                competitionManager?.OnCellPlaced(); // Добавлено
+            }
         }
     }
 

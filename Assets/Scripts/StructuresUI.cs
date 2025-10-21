@@ -1,4 +1,3 @@
-// CombinedStructureUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -21,8 +20,11 @@ public class StructuresUI : MonoBehaviour
     private List<GameObject> currentButtons = new List<GameObject>();
     private bool isInitialized = false;
 
+    private CompetitionManager competitionManager;
+
     private void Start()
     {
+        competitionManager = GetComponent<CompetitionManager>();
         InitializeUI();
     }
 
@@ -38,12 +40,9 @@ public class StructuresUI : MonoBehaviour
             return;
         }
 
-        // Set up mode toggles
         cellsModeToggle.onValueChanged.AddListener(OnCellsModeToggled);
         zonesModeToggle.onValueChanged.AddListener(OnZonesModeToggled);
         
-        // Start with cells mode
-        cellsModeToggle.isOn = true;
         UpdateUI();
         
         isInitialized = true;
@@ -71,27 +70,49 @@ public class StructuresUI : MonoBehaviour
         }
     }
 
-    private void SetMode(PlacementMode mode)
+    public void SetMode(PlacementMode mode)
     {
         if (!isInitialized) return;
 
-        // Cancel any active placements
         if (gridManager.IsPlacingStructure)
             gridManager.CancelStructurePlacement();
             
         if (gridManager.IsPlacingZoneStructure)
             gridManager.CancelZoneStructurePlacement();
 
-        // Clear existing buttons
         ClearButtons();
+
+        // В режиме соревнования показываем только соответствующие кнопки
+        if (competitionManager != null && competitionManager.CompetitionMode)
+        {
+            if (mode == PlacementMode.Zones)
+            {
+                CreateZoneButtons();
+            }
+            else if (mode == PlacementMode.Cells)
+            {
+                CreateStructureButtons();
+            }
+        }
+        else
+        {
+            // Обычный режим - показываем все кнопки
+            if (mode == PlacementMode.Zones)
+            {
+                CreateZoneButtons();
+            }
+            else if (mode == PlacementMode.Cells)
+            {
+                CreateStructureButtons();
+            }
+        }
     }
 
     private void CreateStructureButtons()
     {
         if (!isInitialized || structureButtonPrefab == null) return;
 
-        // Create buttons for each structure
-        for (int i = 0; i < gridManager.AvailableStructures.Count; i++)
+        for (int i = 0; i < gridManager.AvailableStructures.Count; ++i)
         {
             StructureData structure = gridManager.AvailableStructures[i];
             if (structure == null) continue;
@@ -99,14 +120,12 @@ public class StructuresUI : MonoBehaviour
             GameObject buttonObj = Instantiate(structureButtonPrefab, structuresContainer);
             if (buttonObj == null) continue;
             
-            // Set up button text
             TextMeshProUGUI buttonText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
                 buttonText.text = structure.structureName;
             }
             
-            // Set up button click
             Button button = buttonObj.GetComponent<Button>();
             if (button != null)
             {
@@ -116,39 +135,12 @@ public class StructuresUI : MonoBehaviour
             
             currentButtons.Add(buttonObj);
         }
-
-        // Add "Free Drawing" button at the top
-        GameObject freeDrawButton = Instantiate(structureButtonPrefab, structuresContainer);
-        if (freeDrawButton != null)
-        {
-            freeDrawButton.transform.SetAsFirstSibling(); // Move to top
-            
-            TextMeshProUGUI buttonText = freeDrawButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null)
-            {
-                buttonText.text = "Free Drawing";
-            }
-            
-            Button button = freeDrawButton.GetComponent<Button>();
-            if (button != null)
-            {
-                button.onClick.AddListener(SelectFreeDrawing);
-            }
-            
-            // Highlight free drawing as default
-            var colors = button.colors;
-            colors.normalColor = new Color(0.8f, 0.9f, 1.0f);
-            button.colors = colors;
-            
-            currentButtons.Add(freeDrawButton);
-        }
     }
 
     private void CreateZoneButtons()
     {
         if (!isInitialized || zoneButtonPrefab == null) return;
 
-        // Create buttons for each zone structure
         for (int i = 0; i < gridManager.AvailableZoneStructures.Count; i++)
         {
             ZoneStructureData zoneStructure = gridManager.AvailableZoneStructures[i];
@@ -157,21 +149,18 @@ public class StructuresUI : MonoBehaviour
             GameObject buttonObj = Instantiate(zoneButtonPrefab, structuresContainer);
             if (buttonObj == null) continue;
             
-            // Set up button text
             TextMeshProUGUI buttonText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
                 buttonText.text = zoneStructure.structureName;
             }
             
-            // Set up button color to match zone color
             Image buttonImage = buttonObj.GetComponent<Image>();
             if (buttonImage != null)
             {
                 buttonImage.color = new Color(zoneStructure.zoneColor.r, zoneStructure.zoneColor.g, zoneStructure.zoneColor.b, 0.3f);
             }
             
-            // Set up button click
             Button button = buttonObj.GetComponent<Button>();
             if (button != null)
             {
@@ -196,18 +185,6 @@ public class StructuresUI : MonoBehaviour
         if (!isInitialized || index < 0 || index >= gridManager.AvailableZoneStructures.Count) return;
 
         gridManager.StartZoneStructurePlacement(gridManager.AvailableZoneStructures[index]);
-        UpdateUI();
-    }
-
-    private void SelectFreeDrawing()
-    {
-        if (!isInitialized) return;
-
-        // Cancel any structure placement to return to free drawing mode
-        if (gridManager.IsPlacingStructure)
-        {
-            gridManager.CancelStructurePlacement();
-        }
         UpdateUI();
     }
 
@@ -291,7 +268,6 @@ public class StructuresUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Clean up listeners
         if (cellsModeToggle != null)
             cellsModeToggle.onValueChanged.RemoveListener(OnCellsModeToggled);
         if (zonesModeToggle != null)

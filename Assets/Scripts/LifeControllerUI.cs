@@ -12,15 +12,19 @@ public class LifeControllerUI : MonoBehaviour
     [SerializeField] private Toggle randomFillToggle;
     [SerializeField] private Slider randomFillSlider;
     [SerializeField] private TextMeshProUGUI randomFillValueText;
-    [SerializeField] private TextMeshProUGUI aliveCellsText;
+    [SerializeField] private TextMeshProUGUI aliveCellsText; 
+    [SerializeField] private Button competitionModeButton; // Добавлено
+    [SerializeField] private TextMeshProUGUI competitionButtonText; // Добавлено
 
     private LifeController lifeController;
     private GridManager gridManager;
+    private CompetitionManager competitionManager; // Добавлено
 
     private void Start()
     {
         lifeController = GetComponent<LifeController>();
         gridManager = GetComponent<GridManager>();
+        competitionManager = GetComponent<CompetitionManager>(); // Добавлено
         
         updateIntervalSlider.value = lifeController.UpdateInterval;
         randomFillSlider.value = lifeController.RandomFillShare;
@@ -30,12 +34,33 @@ public class LifeControllerUI : MonoBehaviour
         randomFillToggle.onValueChanged.AddListener(OnRandomFillToggleChanged);
         randomFillSlider.onValueChanged.AddListener(OnRandomFillSliderChanged);
         
+        if (competitionModeButton != null)
+        {
+            competitionModeButton.onClick.AddListener(OnCompetitionModeButtonClicked);
+            UpdateCompetitionButtonText();
+        }
+        
         UpdateUI();
     }
 
     private void Update()
     {
         UpdateAliveCellsCount();
+    }
+    
+    private void OnCompetitionModeButtonClicked()
+    {
+        competitionManager.ToggleCompetitionMode();
+        UpdateCompetitionButtonText();
+    }
+
+    private void UpdateCompetitionButtonText()
+    {
+        if (competitionButtonText != null)
+        {
+            competitionButtonText.text = competitionManager.CompetitionMode ? 
+                "Free Mode" : "Competition Mode";
+        }
     }
 
     private void OnUpdateIntervalChanged(float value)

@@ -28,4 +28,4 @@ MonoBehaviour:
   minSurviveNeighbors: 3
   maxSurviveNeighbors: 4
   reproduceNeighbors: 3
-  zoneColor: {r: 0, g: 1, b: 0.017752647, a: 0.3}
+  zoneColor: {r: 0, g: 1, b: 0.017752647, a: 0.2}
