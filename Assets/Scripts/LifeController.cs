@@ -1,433 +1,219 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 public class LifeController : MonoBehaviour
 {
-    [Header("Grid Settings")]
-    [SerializeField] private int width = 50;
-    [SerializeField] private int height = 50;
-    [SerializeField] private float cellSize = 1.0f;
+    [SerializeField] [Range(0.001f, 1f)] private float updateInterval = 0.1f;
+    [SerializeField] [Range(0, 1f)] private float randomFillShare = 0.5f;
+    [SerializeField] private RuleZone defaultRules;
+
+    private GridManager _gridManager;
+    private RuleZoneManager _zoneManager;
+    private InputActionsHandler _inputHandler;
+    private TournamentManager _tournamentManager;
+
+    private bool _isSimulating = false;
+    private float _timer = 0f;
     
-    [Header("Simulation Settings")]
-    [SerializeField][Range(0.1f, 2.0f)] private float updateInterval = 0.5f;
-    [SerializeField][Range(0, 100)] private int randomFillPercent = 50;
-    
-    [Header("Default Rules")]
-    [SerializeField] private int minSurviveNeighbors = 2;
-    [SerializeField] private int maxSurviveNeighbors = 3;
-    [SerializeField] private int reproduceNeighbors = 3;
+    private bool _canPlaceZone = true;
+    private float _zonePlacementCooldown = 0.3f;
 
-    [Header("Prefabs & Materials")]
-    [SerializeField] private GameObject cellPrefab;
-    [SerializeField] private Material aliveMaterial;
-    [SerializeField] private Material deadMaterial;
-    [SerializeField] private Material zoneMaterial;
-
-    [Header("Input Settings")]
-    [SerializeField] private LayerMask gridLayerMask = 1;
-    [SerializeField] private bool useRaycast = true;
-
-    [Header("Custom Rules Zones")]
-    [SerializeField] private List<RuleZone> ruleZones = new List<RuleZone>();
-
-    private bool[,] grid;
-    private GameObject[,] cellObjects;
-    private bool isSimulating = false;
-    private float timer = 0f;
-    private Camera mainCamera;
-    private Plane gridPlane;
-    private RuleZone currentDrawingZone = null;
-    private bool isDrawingZone = false;
-
-    [System.Serializable]
-    public class RuleZone
-    {
-        public string name = "New Zone";
-        public int minSurviveNeighbors = 2;
-        public int maxSurviveNeighbors = 3;
-        public int reproduceNeighbors = 3;
-        public Color zoneColor = new Color(1f, 0.5f, 0f, 0.3f);
-        public bool[,] zoneCells;
-        
-        // Для визуализации
-        [System.NonSerialized] public List<GameObject> zoneVisuals = new List<GameObject>();
-    }
+    public bool IsSimulating => _isSimulating;
+    public float UpdateInterval => updateInterval;
+    public float RandomFillShare => randomFillShare;
 
     private void Start()
     {
-        mainCamera = Camera.main;
-        gridPlane = new Plane(Vector3.forward, Vector3.zero);
-        InitializeGrid();
-        CreateVisualGrid();
-        RandomizeGrid();
-        StartSimulation();
+        _gridManager = GetComponent<GridManager>();
+        _zoneManager = GetComponent<RuleZoneManager>();
+        _inputHandler = GetComponent<InputActionsHandler>();
+        _tournamentManager = GetComponent<TournamentManager>();
+
+        _gridManager.InitializeGrid();
+        _gridManager.CreateVisualGrid();
+        _zoneManager.Initialize(_gridManager);
+        SetupInputHandlers();
     }
 
     private void Update()
     {
-        HandleInput();
-        
-        if (!isSimulating) return;
+        if (!_isSimulating) return;
 
-        timer += Time.deltaTime;
-        if (timer >= updateInterval)
+        _timer += Time.deltaTime;
+        if (_timer >= updateInterval)
         {
-            timer = 0f;
+            _timer = 0f;
             ComputeNextGeneration();
-            UpdateGridVisuals();
+            _gridManager.UpdateGridVisuals();
         }
     }
 
-    private void HandleInput()
+    private void SetupInputHandlers()
     {
-        // Пауза/продолжение по пробелу
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            ToggleSimulation();
-        }
-
-        // Рисование зон по Z
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            if (isDrawingZone)
-                FinishDrawingZone();
-            else
-                StartDrawingZone();
-        }
-
-        // Рисование клеток мышью или зон
-        if (Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetMouseButton(2))
-        {
-            HandleMouseDrawing();
-        }
+        _inputHandler.onToggleSimulation.AddListener(ToggleSimulation);
+        _inputHandler.onRotateStructure.AddListener(OnRotateStructure);
+        _inputHandler.onMouseMove.AddListener(OnMouseMove);
+        _inputHandler.onMouseClick.AddListener(OnMouseClick);
+        _inputHandler.onMouseRightClick.AddListener(OnMouseRightClick);
     }
 
-    private void StartDrawingZone()
+    private void OnRotateStructure()
     {
-        isDrawingZone = true;
-        currentDrawingZone = new RuleZone();
-        currentDrawingZone.name = $"Zone {ruleZones.Count + 1}";
-        currentDrawingZone.zoneCells = new bool[width, height];
-        
-        Debug.Log("Started drawing custom rule zone. Press Z again to finish.");
+        if (_gridManager.IsPlacingStructure)
+            _gridManager.RotateStructure();
     }
 
-    private void FinishDrawingZone()
+    private void OnMouseClick(Vector2 mousePosition)
     {
-        if (!isDrawingZone || currentDrawingZone == null) return;
-        
-        // Добавляем зону только если есть хотя бы одна клетка
-        bool hasCells = false;
-        for (int x = 0; x < width; x++)
+        Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
+        Vector2Int gridPos = WorldToGridPosition(worldPos);
+
+        if (_tournamentManager != null && _tournamentManager.IsTournament)
         {
-            for (int y = 0; y < height; y++)
+            if (_tournamentManager.CurrentState == TournamentState.Player1Zones && 
+                _gridManager.IsPlacingZoneStructure)
             {
-                if (currentDrawingZone.zoneCells[x, y])
+                if (_canPlaceZone && _gridManager.PlaceZoneStructure(gridPos) && _tournamentManager.CanPlaceZone())
                 {
-                    hasCells = true;
-                    break;
+                    _tournamentManager.OnZonePlaced();
+                    StartCoroutine(ZonePlacementCooldown());
                 }
             }
-        }
-        
-        if (hasCells)
-        {
-            ruleZones.Add(currentDrawingZone);
-            UpdateZoneVisuals(currentDrawingZone);
-            Debug.Log($"Finished drawing zone '{currentDrawingZone.name}' with {CountZoneCells(currentDrawingZone)} cells");
-        }
-        else
-        {
-            Debug.Log("Zone drawing canceled - no cells selected");
-        }
-        
-        isDrawingZone = false;
-        currentDrawingZone = null;
-        
-        // Восстанавливаем нормальные цвета всех клеток
-        UpdateGridVisuals();
-    }
-
-    private int CountZoneCells(RuleZone zone)
-    {
-        int count = 0;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
+            else if (_tournamentManager.CurrentState == TournamentState.Player2Cells)
             {
-                if (zone.zoneCells[x, y]) count++;
-            }
-        }
-        return count;
-    }
-
-    private void HandleMouseDrawing()
-    {
-        Vector3 mousePosition = Input.mousePosition;
-        
-        if (useRaycast)
-        {
-            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, gridLayerMask))
-            {
-                ProcessCellAtWorldPosition(hit.point);
+                if (_gridManager.IsPlacingStructure)
+                {
+                    int cellsAdded = _gridManager.PlaceStructure(gridPos);
+                
+                    for (int i = 0; i < cellsAdded && _tournamentManager.CanPlaceCell(); ++i)
+                    {
+                        _tournamentManager.OnCellPlaced();
+                    }
+                }
+                else if (!_gridManager.IsWall(gridPos.x, gridPos.y) && _tournamentManager.CanPlaceCell())
+                {
+                    if (!_gridManager.GetCellState(gridPos.x, gridPos.y))
+                    {
+                        _gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                        _tournamentManager.OnCellPlaced();
+                    }
+                }
             }
         }
         else
         {
-            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
-            float distance;
-            
-            if (gridPlane.Raycast(ray, out distance))
+            if (_gridManager.IsPlacingStructure)
             {
-                Vector3 worldPos = ray.GetPoint(distance);
-                ProcessCellAtWorldPosition(worldPos);
+                _gridManager.PlaceStructure(gridPos);
             }
-        }
-    }
-
-    private void ProcessCellAtWorldPosition(Vector3 worldPos)
-    {
-        int x = Mathf.RoundToInt(worldPos.x / cellSize);
-        int y = Mathf.RoundToInt(worldPos.y / cellSize);
-
-        if (x >= 0 && x < width && y >= 0 && y < height)
-        {
-            if (isDrawingZone)
+            else if (_gridManager.IsPlacingZoneStructure)
             {
-                // Рисование зоны - левая кнопка добавляет, правая убирает
-                bool newState = Input.GetMouseButton(0);
-                
-                // Средняя кнопка мыши тоже добавляет для удобства
-                if (Input.GetMouseButton(2))
-                    newState = true;
-                    
-                if (currentDrawingZone.zoneCells[x, y] != newState)
+                if (_canPlaceZone)
                 {
-                    currentDrawingZone.zoneCells[x, y] = newState;
-                    
-                    // Визуальная обратная связь при рисовании зоны
-                    UpdateTemporaryZoneVisual(x, y, newState);
+                    _gridManager.PlaceZoneStructure(gridPos);
+                    StartCoroutine(ZonePlacementCooldown());
                 }
             }
             else
             {
-                // Обычное рисование клеток - левая кнопка создает живые, правая - мертвые
-                bool newState = Input.GetMouseButton(0);
-                
-                if (grid[x, y] != newState)
+                _gridManager.SetCellState(gridPos.x, gridPos.y, true);
+            }
+        }
+    }
+    
+    private IEnumerator ZonePlacementCooldown()
+    {
+        _canPlaceZone = false;
+        yield return new WaitForSeconds(_zonePlacementCooldown);
+        _canPlaceZone = true;
+    }
+
+    private void OnMouseRightClick(Vector2 mousePosition)
+    {
+        if (_tournamentManager != null && _tournamentManager.IsTournament)
+        {
+            Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
+            Vector2Int gridPos = WorldToGridPosition(worldPos);
+
+            if (_tournamentManager.CurrentState == TournamentState.Player1Zones)
+            {
+                RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+                if (zoneManager != null && zoneManager.RemoveZoneAtPosition(gridPos))
                 {
-                    grid[x, y] = newState;
-                    UpdateCellVisual(x, y);
+                    _tournamentManager.OnZoneRemoved();
                 }
             }
-        }
-    }
-
-    private void UpdateTemporaryZoneVisual(int x, int y, bool state)
-    {
-        if (cellObjects[x, y] == null) return;
-
-        Renderer renderer = cellObjects[x, y].GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            if (state)
+            else if (_tournamentManager.CurrentState == TournamentState.Player2Cells)
             {
-                // Временно подсвечиваем клетку цветом зоны
-                Material tempMaterial = new Material(zoneMaterial);
-                tempMaterial.color = new Color(1f, 0.5f, 0f, 0.7f);
-                renderer.material = tempMaterial;
-            }
-            else
-            {
-                // Возвращаем обычный материал
-                UpdateCellVisual(x, y);
-            }
-        }
-    }
-
-    private void UpdateZoneVisuals(RuleZone zone)
-    {
-        // Очищаем предыдущие визуализации
-        foreach (GameObject visual in zone.zoneVisuals)
-        {
-            if (visual != null) Destroy(visual);
-        }
-        zone.zoneVisuals.Clear();
-
-        // Создаем визуализацию для зоны
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (zone.zoneCells[x, y])
+                if (_gridManager.GetCellState(gridPos.x, gridPos.y))
                 {
-                    Vector3 position = new Vector3(x * cellSize, y * cellSize, -0.1f);
-                    GameObject zoneVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                    zoneVisual.name = $"Zone_{zone.name}_{x}_{y}";
-                    zoneVisual.transform.position = position;
-                    zoneVisual.transform.localScale = Vector3.one * cellSize * 0.9f;
-                    
-                    // Убираем коллайдер, чтобы не мешал основным клеткам
-                    Collider collider = zoneVisual.GetComponent<Collider>();
-                    if (collider != null) Destroy(collider);
-                    
-                    Renderer renderer = zoneVisual.GetComponent<Renderer>();
-                    Material zoneMat = new Material(zoneMaterial);
-                    zoneMat.color = zone.zoneColor;
-                    renderer.material = zoneMat;
-                    
-                    zoneVisual.transform.parent = transform;
-                    zone.zoneVisuals.Add(zoneVisual);
+                    _gridManager.SetCellState(gridPos.x, gridPos.y, false);
+                    _tournamentManager.OnCellRemoved();
                 }
             }
-        }
-    }
-
-    private void InitializeGrid()
-    {
-        grid = new bool[width, height];
-        cellObjects = new GameObject[width, height];
-    }
-
-    private void CreateVisualGrid()
-    {
-        ClearVisualGrid();
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                Vector3 position = new Vector3(x * cellSize, y * cellSize, 0);
-                GameObject cell = Instantiate(cellPrefab, position, Quaternion.identity, transform);
-                cell.name = $"Cell_{x}_{y}";
-                
-                if (cell.GetComponent<Collider>() == null)
-                {
-                    BoxCollider collider = cell.AddComponent<BoxCollider>();
-                    collider.size = new Vector3(cellSize, cellSize, 0.1f);
-                }
-                
-                cellObjects[x, y] = cell;
-                
-                UpdateCellVisual(x, y);
-            }
-        }
         
-        // Обновляем визуализацию всех зон
-        foreach (RuleZone zone in ruleZones)
-        {
-            UpdateZoneVisuals(zone);
-        }
-    }
-
-    private void ClearVisualGrid()
-    {
-        if (cellObjects == null) return;
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
+            if (_gridManager.IsPlacingStructure)
             {
-                if (cellObjects[x, y] != null)
-                {
-                    DestroyImmediate(cellObjects[x, y]);
-                }
+                _gridManager.CancelStructurePlacement();
+            }
+            else if (_gridManager.IsPlacingZoneStructure)
+            {
+                _gridManager.CancelZoneStructurePlacement();
             }
         }
-        
-        // Очищаем визуализацию зон
-        foreach (RuleZone zone in ruleZones)
+        else
         {
-            foreach (GameObject visual in zone.zoneVisuals)
+            if (_gridManager.IsPlacingStructure)
             {
-                if (visual != null) DestroyImmediate(visual);
+                _gridManager.CancelStructurePlacement();
+                return;
             }
-            zone.zoneVisuals.Clear();
-        }
-    }
-
-    private void UpdateCellVisual(int x, int y)
-    {
-        if (cellObjects[x, y] == null) return;
-
-        Renderer renderer = cellObjects[x, y].GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material = grid[x, y] ? aliveMaterial : deadMaterial;
-        }
-    }
-
-    private void UpdateGridVisuals()
-    {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
+            else if (_gridManager.IsPlacingZoneStructure)
             {
-                UpdateCellVisual(x, y);
+                _gridManager.CancelZoneStructurePlacement();
+                return;
             }
+
+            Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
+            Vector2Int gridPos = WorldToGridPosition(worldPos);
+            _gridManager.SetCellState(gridPos.x, gridPos.y, false);
         }
     }
 
-    [ContextMenu("Randomize Grid")]
+    private void OnMouseMove(Vector2 mousePosition)
+    {
+        Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
+        Vector2Int gridPos = WorldToGridPosition(worldPos);
+    
+        if (_gridManager.IsPlacingStructure)
+        {
+            _gridManager.UpdateStructurePreview(gridPos);
+        }
+        else if (_gridManager.IsPlacingZoneStructure)
+        {
+            _gridManager.UpdateZoneStructurePreview(gridPos);
+        }
+    }
+    
+    private Vector2Int WorldToGridPosition(Vector2 worldPosition)
+    {
+        Vector3 localPos = worldPosition - (Vector2)transform.position;
+        int x = Mathf.RoundToInt(localPos.x / _gridManager.CellSize);
+        int y = Mathf.RoundToInt(localPos.y / _gridManager.CellSize);
+        return new Vector2Int(x, y);
+    }
+
     public void RandomizeGrid()
     {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                grid[x, y] = Random.Range(0, 100) < randomFillPercent;
-            }
-        }
-        UpdateGridVisuals();
+        _gridManager.RandomizeGrid(randomFillShare);
     }
 
-    [ContextMenu("Clear Grid")]
-    public void ClearGrid()
-    {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                grid[x, y] = false;
-            }
-        }
-        UpdateGridVisuals();
-    }
-
-    [ContextMenu("Clear All Zones")]
-    public void ClearAllZones()
-    {
-        foreach (RuleZone zone in ruleZones)
-        {
-            foreach (GameObject visual in zone.zoneVisuals)
-            {
-                if (visual != null) DestroyImmediate(visual);
-            }
-        }
-        ruleZones.Clear();
-    }
-
-    public void StartSimulation()
-    {
-        isSimulating = true;
-        Debug.Log("Simulation Started");
-    }
-
-    public void StopSimulation()
-    {
-        isSimulating = false;
-        Debug.Log("Simulation Stopped");
-    }
-
-    [ContextMenu("Toggle Simulation")]
     public void ToggleSimulation()
     {
-        isSimulating = !isSimulating;
-        Debug.Log($"Simulation {(isSimulating ? "Resumed" : "Paused")}");
+        if (!_tournamentManager.IsTournament || _tournamentManager.CurrentState == TournamentState.Simulating)
+        {
+            _isSimulating = !_isSimulating;
+        }
     }
 
     public void SetUpdateInterval(float interval)
@@ -435,118 +221,89 @@ public class LifeController : MonoBehaviour
         updateInterval = Mathf.Clamp(interval, 0.1f, 2.0f);
     }
 
+    public void SetRandomFillShare(float fillShare)
+    {
+        randomFillShare = Mathf.Clamp(fillShare, 0f, 1f);
+    }
+
     private void ComputeNextGeneration()
     {
-        bool[,] newGrid = new bool[width, height];
-
-        for (int x = 0; x < width; x++)
+        bool[][] newGrid = new bool[_gridManager.Width][];
+        for (int index = 0; index < _gridManager.Width; index++)
         {
-            for (int y = 0; y < height; y++)
+            newGrid[index] = new bool[_gridManager.Height];
+        }
+
+        for (int x = 0; x < _gridManager.Width; ++x)
+        {
+            for (int y = 0; y < _gridManager.Height; ++y)
             {
-                // Определяем, какие правила применять к этой клетке
-                RuleZone zone = GetZoneForCell(x, y);
-                int minSurvive = zone != null ? zone.minSurviveNeighbors : minSurviveNeighbors;
-                int maxSurvive = zone != null ? zone.maxSurviveNeighbors : maxSurviveNeighbors;
-                int reproduce = zone != null ? zone.reproduceNeighbors : reproduceNeighbors;
+                if (_gridManager.IsWall(x, y))
+                {
+                    newGrid[x][y] = false;
+                    continue;
+                }
+            
+                RuleZone zone = _zoneManager.GetZoneForCell(x, y);
+                int minSurvive = zone ? zone.minSurviveNeighbors : defaultRules.minSurviveNeighbors;
+                int maxSurvive = zone ? zone.maxSurviveNeighbors : defaultRules.maxSurviveNeighbors;
+                int reproduce = zone ? zone.reproduceNeighbors : defaultRules.reproduceNeighbors;
 
                 int liveNeighbors = CountLiveNeighbors(x, y);
-                bool isAlive = grid[x, y];
+                bool isAlive = _gridManager.Grid[x, y];
 
                 if (isAlive)
                 {
-                    newGrid[x, y] = liveNeighbors >= minSurvive && 
-                                   liveNeighbors <= maxSurvive;
+                    newGrid[x][y] = liveNeighbors >= minSurvive && 
+                                    liveNeighbors <= maxSurvive;
                 }
                 else
                 {
-                    newGrid[x, y] = liveNeighbors == reproduce;
+                    newGrid[x][y] = liveNeighbors == reproduce;
                 }
             }
         }
 
-        grid = newGrid;
-    }
-
-    private RuleZone GetZoneForCell(int x, int y)
-    {
-        foreach (RuleZone zone in ruleZones)
+        for (int x = 0; x < _gridManager.Width; ++x)
         {
-            if (zone.zoneCells[x, y])
-                return zone;
+            for (int y = 0; y < _gridManager.Height; ++y)
+            {
+                if (!_gridManager.IsWall(x, y))
+                {
+                    _gridManager.SetCellState(x, y, newGrid[x][y]);
+                }
+            }
         }
-        return null;
     }
 
     private int CountLiveNeighbors(int x, int y)
     {
         int count = 0;
 
-        for (int i = -1; i <= 1; i++)
+        for (int i = -1; i <= 1; ++i)
         {
-            for (int j = -1; j <= 1; j++)
+            for (int j = -1; j <= 1; ++j)
             {
                 if (i == 0 && j == 0) continue;
 
-                int checkX = (x + i + width) % width;
-                int checkY = (y + j + height) % height;
+                int checkX = x + i;
+                int checkY = y + j;
 
-                if (grid[checkX, checkY])
+                if (!(0 <= checkX && checkX < _gridManager.Width && 0 <= checkY && checkY < _gridManager.Height))
                 {
-                    count++;
+                    continue;
+                }
+                
+                if (_gridManager.IsWall(checkX, checkY))
+                    continue;
+
+                if (_gridManager.Grid[checkX, checkY])
+                {
+                    ++count;
                 }
             }
         }
 
         return count;
-    }
-
-    [ContextMenu("Recreate Grid")]
-    public void RecreateGrid()
-    {
-        InitializeGrid();
-        CreateVisualGrid();
-    }
-
-    private void OnDestroy()
-    {
-        ClearVisualGrid();
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (!Application.isPlaying) return;
-        
-        // Отображение позиции мыши
-        Vector3 mousePos = Input.mousePosition;
-        Ray ray = mainCamera.ScreenPointToRay(mousePos);
-        float distance;
-        
-        if (gridPlane.Raycast(ray, out distance))
-        {
-            Vector3 worldPos = ray.GetPoint(distance);
-            int x = Mathf.RoundToInt(worldPos.x / cellSize);
-            int y = Mathf.RoundToInt(worldPos.y / cellSize);
-            
-            Gizmos.color = isDrawingZone ? Color.yellow : Color.red;
-            Gizmos.DrawWireCube(new Vector3(x * cellSize, y * cellSize, 0), 
-                               new Vector3(cellSize, cellSize, cellSize));
-        }
-        
-        // Отображение текущей рисуемой зоны
-        if (isDrawingZone && currentDrawingZone != null)
-        {
-            Gizmos.color = currentDrawingZone.zoneColor;
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    if (currentDrawingZone.zoneCells[x, y])
-                    {
-                        Vector3 pos = new Vector3(x * cellSize, y * cellSize, -0.05f);
-                        Gizmos.DrawCube(pos, Vector3.one * cellSize * 0.8f);
-                    }
-                }
-            }
-        }
     }
 }

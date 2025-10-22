@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3726d9587b98f324fb0feda973a29513, type: 3}
+  m_Name: _poison_rules
+  m_EditorClassIdentifier: 
+  structureName: Poison
+  width: 12
+  height: 12
+  description: 
+  pattern: 'X...........
+
+    X.XXXXXXXXXX
+
+    X.X........X
+
+    X.X.XXXXXX.X
+
+    X.X.X....X.X
+
+    X.X.X.XX.X.X
+
+    X.X.X..X.X.X
+
+    X.X.XXXX.X.X
+
+    X.X......X.X
+
+    X.XXXXXXXX.X
+
+    X..........X
+
+    XXXXXXXXXXXX'
+  minSurviveNeighbors: 2
+  maxSurviveNeighbors: 0
+  reproduceNeighbors: 3
+  zoneColor: {r: 1, g: 0, b: 0.95856094, a: 0.2}
