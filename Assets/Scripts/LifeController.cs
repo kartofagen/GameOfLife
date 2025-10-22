@@ -66,7 +66,7 @@ public class LifeController : MonoBehaviour
     private void OnMouseClick(Vector2 mousePosition)
     {
         Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
-        Vector2Int gridPos = WorldToGridPosition(worldPos);
+        Vector2Int gridPos = _gridManager.WorldToGridPosition(worldPos);
 
         if (_tournamentManager != null && _tournamentManager.IsTournament)
         {
@@ -133,7 +133,7 @@ public class LifeController : MonoBehaviour
         if (_tournamentManager != null && _tournamentManager.IsTournament)
         {
             Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
-            Vector2Int gridPos = WorldToGridPosition(worldPos);
+            Vector2Int gridPos = _gridManager.WorldToGridPosition(worldPos);
 
             if (_tournamentManager.CurrentState == TournamentState.Player1Zones)
             {
@@ -175,7 +175,7 @@ public class LifeController : MonoBehaviour
             }
 
             Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
-            Vector2Int gridPos = WorldToGridPosition(worldPos);
+            Vector2Int gridPos = _gridManager.WorldToGridPosition(worldPos);
             _gridManager.SetCellState(gridPos.x, gridPos.y, false);
         }
     }
@@ -183,7 +183,7 @@ public class LifeController : MonoBehaviour
     private void OnMouseMove(Vector2 mousePosition)
     {
         Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
-        Vector2Int gridPos = WorldToGridPosition(worldPos);
+        Vector2Int gridPos = _gridManager.WorldToGridPosition(worldPos);
     
         if (_gridManager.IsPlacingStructure)
         {
@@ -193,14 +193,6 @@ public class LifeController : MonoBehaviour
         {
             _gridManager.UpdateZoneStructurePreview(gridPos);
         }
-    }
-    
-    private Vector2Int WorldToGridPosition(Vector2 worldPosition)
-    {
-        Vector3 localPos = worldPosition - (Vector2)transform.position;
-        int x = Mathf.RoundToInt(localPos.x / _gridManager.CellSize);
-        int y = Mathf.RoundToInt(localPos.y / _gridManager.CellSize);
-        return new Vector2Int(x, y);
     }
 
     public void RandomizeGrid()
@@ -214,6 +206,11 @@ public class LifeController : MonoBehaviour
         {
             _isSimulating = !_isSimulating;
         }
+    }
+    
+    public void StopSimulation()
+    {
+        _isSimulating = false;
     }
 
     public void SetUpdateInterval(float interval)

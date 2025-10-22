@@ -133,7 +133,7 @@ public class LifeControllerUI : MonoBehaviour
         aliveCellsText.text = $"Cockroaches: {aliveCount}";
     }
 
-    private void UpdateSimulationButtonText()
+    public void UpdateSimulationButtonText()
     {
         simulationButtonText.text = _lifeController.IsSimulating ? "Pause" : "Start";
     }

@@ -32,7 +32,7 @@ public class TournamentManager : MonoBehaviour
     private LifeController _lifeController;
     private GridManager _gridManager;
     private RuleZoneManager _zoneManager;
-    private StructuresUI _structuresUI;
+    private LifeControllerUI _lifeControllerUI;
 
     private int _currentRound = 0;
     private TournamentState _currentState = TournamentState.Player1Zones;
@@ -48,7 +48,7 @@ public class TournamentManager : MonoBehaviour
         _lifeController = GetComponent<LifeController>();
         _gridManager = GetComponent<GridManager>();
         _zoneManager = GetComponent<RuleZoneManager>();
-        _structuresUI = GetComponent<StructuresUI>();
+        _lifeControllerUI = GetComponent<LifeControllerUI>();
 
         endTurnButton.onClick.RemoveAllListeners();
         endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
@@ -71,6 +71,7 @@ public class TournamentManager : MonoBehaviour
         _zoneManager.ClearAllZones();
         _gridManager.RandomizeGrid(0f);
         _currentRound = 0;
+        endTurnButton.interactable = true;
         
         isTournament = true;
         SetTogglesInteractable(false);
@@ -78,6 +79,12 @@ public class TournamentManager : MonoBehaviour
         
         tournamentPanel.SetActive(true);
         resultsPanel.SetActive(false);
+        
+        _lifeController.StopSimulation();
+        if (_lifeControllerUI != null)
+        {
+            _lifeControllerUI.UpdateSimulationButtonText();
+        }
 
         StartNextRound();
     }
@@ -290,24 +297,27 @@ public class TournamentManager : MonoBehaviour
     
     public void AbortTournament()
     {
-        if (isTournament)
+        _lifeController.StopSimulation();
+        if (_lifeControllerUI != null)
         {
-            isTournament = false;
-            SetTogglesInteractable(true);
-            SetOuterUIInteractable(true);
-        
-            tournamentPanel.SetActive(false);
-            resultsPanel.SetActive(false);
-        
-            _currentState = TournamentState.Player1Zones;
-            _player1ZonesPlaced = 0;
-            _player2CellsPlaced = 0;
-        
-            _zoneManager.ClearAllZones();
-            _gridManager.RandomizeGrid(0f);
-        
-            UpdateUI();
+            _lifeControllerUI.UpdateSimulationButtonText();
         }
+        
+        isTournament = false;
+        SetTogglesInteractable(true);
+        SetOuterUIInteractable(true);
+    
+        tournamentPanel.SetActive(false);
+        resultsPanel.SetActive(false);
+    
+        _currentState = TournamentState.Player1Zones;
+        _player1ZonesPlaced = 0;
+        _player2CellsPlaced = 0;
+    
+        _zoneManager.ClearAllZones();
+        _gridManager.RandomizeGrid(0f);
+    
+        UpdateUI();
     }
 
     public void EndTournament()
@@ -333,6 +343,12 @@ public class TournamentManager : MonoBehaviour
     private IEnumerator SwitchToFreeModeAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
+        
+        _lifeController.StopSimulation();
+        if (_lifeControllerUI != null)
+        {
+            _lifeControllerUI.UpdateSimulationButtonText();
+        }
     
         tournamentPanel.SetActive(false);
         resultsPanel.SetActive(false);

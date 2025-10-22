@@ -389,9 +389,20 @@ public class GridManager : MonoBehaviour
     public void RotateStructure()
     {
         if (!_isPlacingStructure || _currentStructure == null) return;
-        
+    
         _structureRotation = (_structureRotation + 1) % 4;
-        UpdateStructurePreview(Vector2Int.zero);
+    
+        Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2Int gridPos = WorldToGridPosition(mouseWorldPos);
+        UpdateStructurePreview(gridPos);
+    }
+    
+    public Vector2Int WorldToGridPosition(Vector2 worldPosition)
+    {
+        Vector3 localPos = worldPosition - (Vector2)transform.position;
+        int x = Mathf.RoundToInt(localPos.x / CellSize);
+        int y = Mathf.RoundToInt(localPos.y / CellSize);
+        return new Vector2Int(x, y);
     }
 
     public void CancelStructurePlacement()
