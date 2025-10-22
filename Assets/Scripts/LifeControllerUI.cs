@@ -130,7 +130,7 @@ public class LifeControllerUI : MonoBehaviour
                 }
             }
         }
-        aliveCellsText.text = $"Alive Cockroaches: {aliveCount}";
+        aliveCellsText.text = $"Cockroaches: {aliveCount}";
     }
 
     private void UpdateSimulationButtonText()

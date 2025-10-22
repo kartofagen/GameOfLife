@@ -116,8 +116,6 @@ public class TournamentManager : MonoBehaviour
             return;
         }
         
-        zonesModeToggle.isOn = true;
-        cellsModeToggle.isOn = false;
         endTurnButton.onClick.RemoveAllListeners();
         endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
 
@@ -158,27 +156,18 @@ public class TournamentManager : MonoBehaviour
     {
         if (_currentState == TournamentState.Player1Zones)
         {
-            if (_structuresUI)
-            {
-                var toggles = _structuresUI.GetComponentsInChildren<Toggle>();
-                foreach (var toggle in toggles)
-                {
-                    if (toggle.name.Contains("Zones")) toggle.isOn = true;
-                    if (toggle.name.Contains("Cells")) toggle.isOn = false;
-                }
-            }
+            zonesModeToggle.isOn = true;
+            cellsModeToggle.isOn = false;
         }
         else if (_currentState == TournamentState.Player2Cells)
         {
-            if (_structuresUI)
-            {
-                var toggles = _structuresUI.GetComponentsInChildren<Toggle>();
-                foreach (var toggle in toggles)
-                {
-                    if (toggle.name.Contains("Zones")) toggle.isOn = false;
-                    if (toggle.name.Contains("Cells")) toggle.isOn = true;
-                }
-            }
+            zonesModeToggle.isOn = false;
+            cellsModeToggle.isOn = true;
+        }
+        else
+        {
+            zonesModeToggle.isOn = false;
+            cellsModeToggle.isOn = false;
         }
     }
 
@@ -242,18 +231,15 @@ public class TournamentManager : MonoBehaviour
 
     private void AdvanceToPlayer2()
     {
-        zonesModeToggle.isOn = false;
-        cellsModeToggle.isOn = true;
         _currentState = TournamentState.Player2Cells;
         UpdateStructuresUI();
     }
 
     private void StartSimulation()
     {
-        zonesModeToggle.isOn = false;
-        cellsModeToggle.isOn = true;
         endTurnButton.interactable = false;
         _currentState = TournamentState.Simulating;
+        UpdateStructuresUI();
         StartCoroutine(RunSimulation());
     }
     

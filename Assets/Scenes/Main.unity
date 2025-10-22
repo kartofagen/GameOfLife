@@ -363,7 +363,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
@@ -6584,7 +6584,7 @@ MonoBehaviour:
   isTournament: 0
   totalRounds: 3
   simulationsPerRound: 100
-  maxZonesPerPlayer: 25
+  maxZonesPerPlayer: 50
   maxCellsPerPlayer: 1000
   tournamentStatusText: {fileID: 1190794904}
   tournamentPanel: {fileID: 1809210792}
