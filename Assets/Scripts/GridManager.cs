@@ -226,7 +226,7 @@ public class GridManager : MonoBehaviour
         _structureRotation = 0;
     }
 
-    private bool[,] GetRotatedStructureCells()
+    public bool[,] GetRotatedStructureCells()
     {
         if (_currentStructure == null || _currentStructureCells == null) 
             return new bool[0,0];
@@ -339,21 +339,22 @@ public class GridManager : MonoBehaviour
         return true;
     }
 
-    public bool PlaceStructure(Vector2Int gridPosition)
+    public int PlaceStructure(Vector2Int gridPosition)
     {
         if (!_isPlacingStructure || _currentStructure == null || _currentStructureCells == null) 
         {
-            return false;
+            return 0;
         }
 
         if (!IsStructurePlacementValid(gridPosition))
         {
-            return false;
+            return 0;
         }
 
         bool[,] rotatedCells = GetRotatedStructureCells();
         int structureWidth = rotatedCells.GetLength(0);
         int structureHeight = rotatedCells.GetLength(1);
+        int cellsAdded = 0;
 
         for (int x = 0; x < structureWidth; ++x)
         {
@@ -363,12 +364,17 @@ public class GridManager : MonoBehaviour
                 {
                     int worldX = gridPosition.x + x - structureWidth / 2;
                     int worldY = gridPosition.y + y - structureHeight / 2;
-                    SetCellState(worldX, worldY, true);
+                
+                    if (!GetCellState(worldX, worldY))
+                    {
+                        SetCellState(worldX, worldY, true);
+                        ++cellsAdded;
+                    }
                 }
             }
         }
 
-        return true;
+        return cellsAdded;
     }
 
     private void ClearStructurePreview()
@@ -436,7 +442,7 @@ public class GridManager : MonoBehaviour
     public bool PlaceZoneStructure(Vector2Int gridPosition)
     {
         TournamentManager tournamentManager = GetComponent<TournamentManager>();
-        if (tournamentManager != null && tournamentManager.TournamentMode && 
+        if (tournamentManager != null && tournamentManager.IsTournament && 
             !tournamentManager.CanPlaceZone())
         {
             return false;

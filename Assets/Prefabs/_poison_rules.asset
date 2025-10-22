@@ -13,19 +13,33 @@ MonoBehaviour:
   m_Name: _poison_rules
   m_EditorClassIdentifier: 
   structureName: Poison
-  width: 5
-  height: 5
+  width: 12
+  height: 12
   description: 
-  pattern: '..X..
+  pattern: 'X...........
 
-    .XXX.
+    X.XXXXXXXXXX
 
-    XXXXX
+    X.X........X
 
-    .XXX.
+    X.X.XXXXXX.X
 
-    ..X..'
+    X.X.X....X.X
+
+    X.X.X.XX.X.X
+
+    X.X.X..X.X.X
+
+    X.X.XXXX.X.X
+
+    X.X......X.X
+
+    X.XXXXXXXX.X
+
+    X..........X
+
+    XXXXXXXXXXXX'
   minSurviveNeighbors: 2
-  maxSurviveNeighbors: 3
+  maxSurviveNeighbors: 0
   reproduceNeighbors: 3
   zoneColor: {r: 1, g: 0, b: 0.95856094, a: 0.2}

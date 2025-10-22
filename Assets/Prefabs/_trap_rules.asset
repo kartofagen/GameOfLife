@@ -13,15 +13,21 @@ MonoBehaviour:
   m_Name: _trap_rules
   m_EditorClassIdentifier: 
   structureName: Trap
-  width: 2
-  height: 3
+  width: 6
+  height: 6
   description: 
-  pattern: 'XX
+  pattern: 'XXXXXX
 
-    XX
+    XXXXXX
 
-    XX'
-  minSurviveNeighbors: 2
-  maxSurviveNeighbors: 0
+    XXXXXX
+
+    XXXXXX
+
+    XXXXXX
+
+    XXXXXX'
+  minSurviveNeighbors: 1
+  maxSurviveNeighbors: 1
   reproduceNeighbors: 3
   zoneColor: {r: 0.9294889, g: 1, b: 0, a: 0.2}

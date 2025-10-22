@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class TournamentManager : MonoBehaviour
 {
     [Header("Tournament Settings")]
-    [SerializeField] private bool tournamentMode = false;
+    [SerializeField] private bool isTournament = false;
     [SerializeField] private int totalRounds = 10;
     [SerializeField] private int simulationsPerRound = 100;
     [SerializeField] private int maxZonesPerPlayer = 5;
@@ -20,6 +20,10 @@ public class TournamentManager : MonoBehaviour
     [SerializeField] private GameObject resultsPanel;
     [SerializeField] private TextMeshProUGUI resultsText;
     [SerializeField] private Button endTurnButton;
+    
+    [Header("Outer UI References")]
+    [SerializeField] private Toggle randomizeToggle;
+    [SerializeField] private Button simulationButton;
 
     [Header("Mode Toggles")]
     [SerializeField] private Toggle cellsModeToggle;
@@ -36,8 +40,9 @@ public class TournamentManager : MonoBehaviour
     private TournamentState _currentState = TournamentState.Player1Zones;
     private int _player1ZonesPlaced = 0;
     private int _player2CellsPlaced = 0;
+    private int _simulationProgress = 0;
 
-    public bool TournamentMode => tournamentMode;
+    public bool IsTournament => isTournament;
     public TournamentState CurrentState => _currentState;
 
     private void Start()
@@ -50,13 +55,14 @@ public class TournamentManager : MonoBehaviour
         endTurnButton.onClick.RemoveAllListeners();
         endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
 
-        if (tournamentMode)
+        if (isTournament)
         {
             StartTournament();
         }
         else
         {
             tournamentPanel.SetActive(false);
+            resultsPanel.SetActive(false);
         }
     }
 
@@ -70,8 +76,9 @@ public class TournamentManager : MonoBehaviour
         
         _player1Wins = 0;
         _player2Wins = 0;
-        tournamentMode = true;
+        isTournament = true;
         SetTogglesInteractable(false);
+        SetOuterUIInteractable(false);
         
         tournamentPanel.SetActive(true);
         resultsPanel.SetActive(false);
@@ -94,8 +101,14 @@ public class TournamentManager : MonoBehaviour
 
     private void SetTogglesInteractable(bool interactable)
     {
-        if (cellsModeToggle) cellsModeToggle.interactable = interactable;
-        if (zonesModeToggle) zonesModeToggle.interactable = interactable;
+        cellsModeToggle.interactable = interactable;
+        zonesModeToggle.interactable = interactable;
+    }
+    
+    private void SetOuterUIInteractable(bool interactable)
+    {
+        randomizeToggle.interactable = interactable;
+        simulationButton.interactable = interactable;
     }
 
     private void StartNextRound()
@@ -119,7 +132,7 @@ public class TournamentManager : MonoBehaviour
 
     private void Update()
     {
-        if (!tournamentMode) return;
+        if (!isTournament) return;
 
         UpdateUI();
     }
@@ -131,14 +144,15 @@ public class TournamentManager : MonoBehaviour
         switch (_currentState)
         {
             case TournamentState.Player1Zones:
-                remainingText.text = $"Zones Remaining: {maxZonesPerPlayer - _player1ZonesPlaced}";
+                playerTurnText.text = "Player 1: Place Poison";
+                remainingText.text = $"Poisons: {maxZonesPerPlayer - _player1ZonesPlaced}";
                 break;
             case TournamentState.Player2Cells:
-                playerTurnText.text = "Player 2: Place Cells";
-                remainingText.text = $"Cells Remaining: {maxCellsPerPlayer - _player2CellsPlaced}";
+                playerTurnText.text = "Player 2: Place Cockroaches";
+                remainingText.text = $"Cockroaches: {maxCellsPerPlayer - _player2CellsPlaced}";
                 break;
             case TournamentState.Simulating:
-                playerTurnText.text = "Simulating...";
+                playerTurnText.text = $"Survival: {_simulationProgress}/{simulationsPerRound}";
                 remainingText.text = "";
                 break;
         }
@@ -174,14 +188,14 @@ public class TournamentManager : MonoBehaviour
 
     public bool CanPlaceZone()
     {
-        return tournamentMode && 
+        return isTournament && 
                _currentState == TournamentState.Player1Zones && 
                _player1ZonesPlaced < maxZonesPerPlayer;
     }
 
     public bool CanPlaceCell()
     {
-        return tournamentMode && 
+        return isTournament && 
                _currentState == TournamentState.Player2Cells && 
                _player2CellsPlaced < maxCellsPerPlayer;
     }
@@ -211,6 +225,24 @@ public class TournamentManager : MonoBehaviour
             }
         }
     }
+    
+    public void OnCellRemoved()
+    {
+        if (isTournament && _currentState == TournamentState.Player2Cells && _player2CellsPlaced > 0)
+        {
+            --_player2CellsPlaced;
+            UpdateUI();
+        }
+    }
+
+    public void OnZoneRemoved()
+    {
+        if (isTournament && _currentState == TournamentState.Player1Zones && _player1ZonesPlaced > 0)
+        {
+            --_player1ZonesPlaced;
+            UpdateUI();
+        }
+    }
 
     private void AdvanceToPlayer2()
     {
@@ -236,6 +268,7 @@ public class TournamentManager : MonoBehaviour
         for (int i = 0; i < simulationsPerRound; ++i)
         {
             yield return new WaitForSeconds(_lifeController.UpdateInterval);
+            _simulationProgress = i + 1;
         }
         
         _lifeController.ToggleSimulation();
@@ -302,8 +335,14 @@ public class TournamentManager : MonoBehaviour
         resultsText.text = $"{finalResult}\nFinal Score: {_player1Wins} - {_player2Wins}";
         resultsPanel.SetActive(true);
 
-        tournamentMode = false;
+        isTournament = false;
         SetTogglesInteractable(true);
+        randomizeToggle.interactable = true;
+    
+        LifeControllerUI uiController = GetComponent<LifeControllerUI>();
+        System.Reflection.MethodInfo updateMethod = uiController.GetType().GetMethod("UpdateClearZonesButton", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        updateMethod?.Invoke(uiController, null);
     }
 }
 

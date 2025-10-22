@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4005fa455a5d4fe4e835325fe7baebee, type: 3}
   m_Name: Base Rules
   m_EditorClassIdentifier: 
-  zoneName: New Zone
+  zoneName: GameOfLife
   minSurviveNeighbors: 2
   maxSurviveNeighbors: 3
   reproduceNeighbors: 3

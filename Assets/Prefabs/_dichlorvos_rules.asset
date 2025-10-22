@@ -13,18 +13,30 @@ MonoBehaviour:
   m_Name: _dichlorvos_rules
   m_EditorClassIdentifier: 
   structureName: Dichlorvos
-  width: 5
-  height: 5
+  width: 13
+  height: 11
   description: 
-  pattern: '..X..
+  pattern: '....XXXXX....
 
-    .XXX.
+    ...XXXXXXX...
 
-    XXXXX
+    ..XXXXXXXXX..
 
-    .XXX.
+    .XXXXXXXXXXX.
 
-    ..X..'
+    .XXXXXXXXXXX.
+
+    .XXXXXXXXXXX.
+
+    .XXXXXXXXXXX.
+
+    .XXXXXXXXXXX.
+
+    ..XXXXXXXXX..
+
+    ...XXXXXXX...
+
+    ....XXXXX....'
   minSurviveNeighbors: 3
   maxSurviveNeighbors: 4
   reproduceNeighbors: 3

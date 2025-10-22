@@ -49,8 +49,9 @@ public class RuleZoneManager : MonoBehaviour
 
     public RuleZone GetZoneForCell(int x, int y)
     {
-        foreach (RuleZone zone in ruleZones)
+        for (int i = ruleZones.Count - 1; i >= 0; --i)
         {
+            RuleZone zone = ruleZones[i];
             if (zone.ZoneCells != null && x >= 0 && x < zone.ZoneCells.GetLength(0) && 
                 y >= 0 && y < zone.ZoneCells.GetLength(1) && zone.ZoneCells[x, y])
                 return zone;
@@ -204,6 +205,7 @@ public class RuleZoneManager : MonoBehaviour
 
         int structureWidth = zoneStructure.Cells.GetLength(0);
         int structureHeight = zoneStructure.Cells.GetLength(1);
+        bool atLeastOneCellInside = false;
 
         for (int x = 0; x < structureWidth; ++x)
         {
@@ -214,19 +216,39 @@ public class RuleZoneManager : MonoBehaviour
                     int worldX = gridPosition.x + x - structureWidth / 2;
                     int worldY = gridPosition.y + y - structureHeight / 2;
 
-                    if (worldX < 0 || worldX >= _gridManager.Width || 
-                        worldY < 0 || worldY >= _gridManager.Height)
+                    if (worldX >= 0 && worldX < _gridManager.Width && 
+                        worldY >= 0 && worldY < _gridManager.Height)
                     {
-                        return false;
-                    }
-
-                    if (GetZoneForCell(worldX, worldY) != null)
-                    {
-                        return false;
+                        atLeastOneCellInside = true;
                     }
                 }
             }
         }
-        return true;
+    
+        return atLeastOneCellInside;
+    }
+    
+    public bool RemoveZoneAtPosition(Vector2Int gridPosition)
+    {
+        for (int i = ruleZones.Count - 1; i >= 0; --i)
+        {
+            RuleZone zone = ruleZones[i];
+            if (zone.ZoneCells != null && 
+                gridPosition.x >= 0 && gridPosition.x < zone.ZoneCells.GetLength(0) &&
+                gridPosition.y >= 0 && gridPosition.y < zone.ZoneCells.GetLength(1) &&
+                zone.ZoneCells[gridPosition.x, gridPosition.y])
+            {
+                foreach (GameObject visual in zone.ZoneVisuals)
+                {
+                    if (visual != null) Destroy(visual);
+                }
+                zone.ZoneVisuals.Clear();
+            
+                ruleZones.RemoveAt(i);
+                
+                return true;
+            }
+        }
+        return false;
     }
 }

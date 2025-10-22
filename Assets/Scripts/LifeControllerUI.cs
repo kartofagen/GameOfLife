@@ -15,6 +15,7 @@ public class LifeControllerUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI aliveCellsText; 
     [SerializeField] private Button tournamentModeButton;
     [SerializeField] private TextMeshProUGUI tournamentButtonText;
+    [SerializeField] private Button clearZonesButton;
 
     private LifeController _lifeController;
     private GridManager _gridManager;
@@ -30,15 +31,13 @@ public class LifeControllerUI : MonoBehaviour
         simulationButton.onClick.AddListener(OnSimulationButtonClicked);
         randomFillToggle.onValueChanged.AddListener(OnRandomFillToggleChanged);
         randomFillSlider.onValueChanged.AddListener(OnRandomFillSliderChanged);
+        clearZonesButton.onClick.AddListener(OnClearZonesButtonClicked);
+        tournamentModeButton.onClick.AddListener(OnTournamentModeButtonClicked);
         
-        if (tournamentModeButton != null)
-        {
-            tournamentModeButton.onClick.AddListener(OnTournamentModeButtonClicked);
-            UpdateTournamentButtonText();
-        }
-        
+        UpdateTournamentButtonText();
         UpdateSimulationButtonText();
         UpdateSliders();
+        UpdateClearZonesButton();
     }
 
     private void Update()
@@ -46,9 +45,26 @@ public class LifeControllerUI : MonoBehaviour
         UpdateAliveCellsCount();
     }
     
+    private void OnClearZonesButtonClicked()
+    {
+        RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+        if (zoneManager != null && !_tournamentManager.IsTournament)
+        {
+            zoneManager.ClearAllZones();
+        }
+    }
+    
+    private void UpdateClearZonesButton()
+    {
+        if (clearZonesButton != null)
+        {
+            clearZonesButton.interactable = !_tournamentManager.IsTournament;
+        }
+    }
+    
     private void OnTournamentModeButtonClicked()
     {
-        if (_tournamentManager.TournamentMode)
+        if (_tournamentManager.IsTournament)
         {
             _tournamentManager.EndTournament();
         }
@@ -64,8 +80,10 @@ public class LifeControllerUI : MonoBehaviour
     {
         if (tournamentButtonText != null)
         {
-            tournamentButtonText.text = _tournamentManager.TournamentMode ? "Free Mode" : "Tournament";
+            tournamentButtonText.text = _tournamentManager.IsTournament ? "Free Mode" : "Tournament";
         }
+        
+        UpdateClearZonesButton();
     }
 
     private void OnUpdateIntervalChanged(float value)
@@ -112,7 +130,7 @@ public class LifeControllerUI : MonoBehaviour
                 }
             }
         }
-        aliveCellsText.text = $"Alive Cells: {aliveCount}";
+        aliveCellsText.text = $"Alive Cockroaches: {aliveCount}";
     }
 
     private void UpdateSimulationButtonText()

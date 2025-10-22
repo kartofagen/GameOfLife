@@ -1,9 +1,10 @@
 using UnityEngine;
+using System.Collections;
 
 public class LifeController : MonoBehaviour
 {
-    [SerializeField][Range(0.001f, 1f)] private float updateInterval = 0.1f;
-    [SerializeField][Range(0, 1f)] private float randomFillShare = 0.5f;
+    [SerializeField] [Range(0.001f, 1f)] private float updateInterval = 0.1f;
+    [SerializeField] [Range(0, 1f)] private float randomFillShare = 0.5f;
     [SerializeField] private RuleZone defaultRules;
 
     private GridManager _gridManager;
@@ -14,6 +15,9 @@ public class LifeController : MonoBehaviour
     private bool _isSimulating = false;
     private float _timer = 0f;
     
+    private bool _canPlaceZone = true;
+    private float _zonePlacementCooldown = 0.3f;
+
     public bool IsSimulating => _isSimulating;
     public float UpdateInterval => updateInterval;
     public float RandomFillShare => randomFillShare;
@@ -43,7 +47,7 @@ public class LifeController : MonoBehaviour
             _gridManager.UpdateGridVisuals();
         }
     }
-    
+
     private void SetupInputHandlers()
     {
         _inputHandler.onToggleSimulation.AddListener(ToggleSimulation);
@@ -52,34 +56,47 @@ public class LifeController : MonoBehaviour
         _inputHandler.onMouseClick.AddListener(OnMouseClick);
         _inputHandler.onMouseRightClick.AddListener(OnMouseRightClick);
     }
-    
+
     private void OnRotateStructure()
     {
         if (_gridManager.IsPlacingStructure)
             _gridManager.RotateStructure();
     }
-    
+
     private void OnMouseClick(Vector2 mousePosition)
     {
         Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
 
-        if (_tournamentManager != null && _tournamentManager.TournamentMode)
+        if (_tournamentManager != null && _tournamentManager.IsTournament)
         {
             if (_tournamentManager.CurrentState == TournamentState.Player1Zones && 
                 _gridManager.IsPlacingZoneStructure)
             {
-                if (_gridManager.PlaceZoneStructure(gridPos) && _tournamentManager.CanPlaceZone())
+                if (_canPlaceZone && _gridManager.PlaceZoneStructure(gridPos) && _tournamentManager.CanPlaceZone())
                 {
                     _tournamentManager.OnZonePlaced();
+                    StartCoroutine(ZonePlacementCooldown());
                 }
             }
             else if (_tournamentManager.CurrentState == TournamentState.Player2Cells)
             {
-                if (!_gridManager.IsWall(gridPos.x, gridPos.y) && _tournamentManager.CanPlaceCell())
+                if (_gridManager.IsPlacingStructure)
                 {
-                    _gridManager.SetCellState(gridPos.x, gridPos.y, true);
-                    _tournamentManager.OnCellPlaced();
+                    int cellsAdded = _gridManager.PlaceStructure(gridPos);
+                
+                    for (int i = 0; i < cellsAdded && _tournamentManager.CanPlaceCell(); ++i)
+                    {
+                        _tournamentManager.OnCellPlaced();
+                    }
+                }
+                else if (!_gridManager.IsWall(gridPos.x, gridPos.y) && _tournamentManager.CanPlaceCell())
+                {
+                    if (!_gridManager.GetCellState(gridPos.x, gridPos.y))
+                    {
+                        _gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                        _tournamentManager.OnCellPlaced();
+                    }
                 }
             }
         }
@@ -91,7 +108,11 @@ public class LifeController : MonoBehaviour
             }
             else if (_gridManager.IsPlacingZoneStructure)
             {
-                _gridManager.PlaceZoneStructure(gridPos);
+                if (_canPlaceZone)
+                {
+                    _gridManager.PlaceZoneStructure(gridPos);
+                    StartCoroutine(ZonePlacementCooldown());
+                }
             }
             else
             {
@@ -99,11 +120,38 @@ public class LifeController : MonoBehaviour
             }
         }
     }
+    
+    private IEnumerator ZonePlacementCooldown()
+    {
+        _canPlaceZone = false;
+        yield return new WaitForSeconds(_zonePlacementCooldown);
+        _canPlaceZone = true;
+    }
 
     private void OnMouseRightClick(Vector2 mousePosition)
     {
-        if (_tournamentManager != null && _tournamentManager.TournamentMode)
+        if (_tournamentManager != null && _tournamentManager.IsTournament)
         {
+            Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
+            Vector2Int gridPos = WorldToGridPosition(worldPos);
+
+            if (_tournamentManager.CurrentState == TournamentState.Player1Zones)
+            {
+                RuleZoneManager zoneManager = GetComponent<RuleZoneManager>();
+                if (zoneManager != null && zoneManager.RemoveZoneAtPosition(gridPos))
+                {
+                    _tournamentManager.OnZoneRemoved();
+                }
+            }
+            else if (_tournamentManager.CurrentState == TournamentState.Player2Cells)
+            {
+                if (_gridManager.GetCellState(gridPos.x, gridPos.y))
+                {
+                    _gridManager.SetCellState(gridPos.x, gridPos.y, false);
+                    _tournamentManager.OnCellRemoved();
+                }
+            }
+        
             if (_gridManager.IsPlacingStructure)
             {
                 _gridManager.CancelStructurePlacement();
@@ -162,7 +210,10 @@ public class LifeController : MonoBehaviour
 
     public void ToggleSimulation()
     {
-        _isSimulating = !_isSimulating;
+        if (!_tournamentManager.IsTournament || _tournamentManager.CurrentState == TournamentState.Simulating)
+        {
+            _isSimulating = !_isSimulating;
+        }
     }
 
     public void SetUpdateInterval(float interval)

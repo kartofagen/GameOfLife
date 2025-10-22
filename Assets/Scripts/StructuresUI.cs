@@ -172,28 +172,28 @@ public class StructuresUI : MonoBehaviour
 
         if (cellsModeToggle.isOn)
         {
-            currentModeText.text = "CELLS MODE";
+            currentModeText.text = "COCKROACH GOD";
             
             if (_gridManager.IsPlacingStructure)
             {
-                instructionText.text = "Placing Structure\n• LMB: Place\n• RMB: Cancel\n• R: Rotate";
+                instructionText.text = "Placing Structure\n-LMB: Place\n-RMB: Cancel\n-R: Rotate";
             }
             else
             {
-                instructionText.text = "Free Drawing\n• LMB: Create cells\n• RMB: Remove cells\n• Select pattern below";
+                instructionText.text = "Free Drawing\n-LMB: Create cockroaches\n-RMB: Remove cockroaches";
             }
         }
         else if (zonesModeToggle.isOn)
         {
-            currentModeText.text = "ZONES MODE";
+            currentModeText.text = "EXTERMINATOR";
             
             if (_gridManager.IsPlacingZoneStructure)
             {
-                instructionText.text = "Placing Zone\n• LMB: Place\n• RMB: Cancel";
+                instructionText.text = "Placing Poison\n-LMB: Place\n-RMB: Cancel";
             }
             else
             {
-                instructionText.text = "Zone Placement\n• Select zone type below\n• Each zone has custom rules";
+                instructionText.text = "Poison Placement\n-Select poison type below\n-Each poison has custom rules";
             }
         }
     }
