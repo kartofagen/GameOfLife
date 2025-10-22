@@ -113,7 +113,8 @@ public class RuleZoneManager : MonoBehaviour
                     int worldY = gridPosition.y + y - structureHeight / 2;
 
                     if (worldX >= 0 && worldX < _gridManager.Width && 
-                        worldY >= 0 && worldY < _gridManager.Height)
+                        worldY >= 0 && worldY < _gridManager.Height &&
+                        !_gridManager.IsWall(worldX, worldY))
                     {
                         zone.ZoneCells[worldX, worldY] = true;
                     }
@@ -146,7 +147,8 @@ public class RuleZoneManager : MonoBehaviour
                     int worldY = gridPosition.y + y - structureHeight / 2;
 
                     if (worldX >= 0 && worldX < _gridManager.Width && 
-                        worldY >= 0 && worldY < _gridManager.Height)
+                        worldY >= 0 && worldY < _gridManager.Height &&
+                        !_gridManager.IsWall(worldX, worldY))
                     {
                         CreateZoneVisual(null, worldX, worldY, -0.2f, 
                             new Color(zoneStructure.zoneColor.r, zoneStructure.zoneColor.g, 

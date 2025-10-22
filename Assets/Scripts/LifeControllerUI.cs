@@ -66,7 +66,7 @@ public class LifeControllerUI : MonoBehaviour
     {
         if (_tournamentManager.IsTournament)
         {
-            _tournamentManager.EndTournament();
+            _tournamentManager.AbortTournament();
         }
         else
         {

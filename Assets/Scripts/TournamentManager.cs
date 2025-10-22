@@ -35,8 +35,6 @@ public class TournamentManager : MonoBehaviour
     private StructuresUI _structuresUI;
 
     private int _currentRound = 0;
-    private int _player1Wins = 0;
-    private int _player2Wins = 0;
     private TournamentState _currentState = TournamentState.Player1Zones;
     private int _player1ZonesPlaced = 0;
     private int _player2CellsPlaced = 0;
@@ -74,8 +72,6 @@ public class TournamentManager : MonoBehaviour
         _gridManager.RandomizeGrid(0f);
         _currentRound = 0;
         
-        _player1Wins = 0;
-        _player2Wins = 0;
         isTournament = true;
         SetTogglesInteractable(false);
         SetOuterUIInteractable(false);
@@ -144,11 +140,11 @@ public class TournamentManager : MonoBehaviour
         switch (_currentState)
         {
             case TournamentState.Player1Zones:
-                playerTurnText.text = "Player 1: Place Poison";
+                playerTurnText.text = "P1: Place Poison";
                 remainingText.text = $"Poisons: {maxZonesPerPlayer - _player1ZonesPlaced}";
                 break;
             case TournamentState.Player2Cells:
-                playerTurnText.text = "Player 2: Place Cockroaches";
+                playerTurnText.text = "P2: Place Cockroaches";
                 remainingText.text = $"Cockroaches: {maxCellsPerPlayer - _player2CellsPlaced}";
                 break;
             case TournamentState.Simulating:
@@ -260,53 +256,43 @@ public class TournamentManager : MonoBehaviour
         _currentState = TournamentState.Simulating;
         StartCoroutine(RunSimulation());
     }
-
+    
     private IEnumerator RunSimulation()
     {
         _lifeController.ToggleSimulation();
-        
+    
         for (int i = 0; i < simulationsPerRound; ++i)
         {
             yield return new WaitForSeconds(_lifeController.UpdateInterval);
             _simulationProgress = i + 1;
         }
-        
+    
         _lifeController.ToggleSimulation();
-        
-        bool cellsAlive = CheckLivingCells();
-        if (cellsAlive)
-        {
-            ++_player1Wins;
-        }
-        else
-        {
-            ++_player2Wins;
-        }
-        
-        ShowRoundResult(cellsAlive);
+    
+        int aliveCount = CountAliveCells();
+        ShowRoundResult(aliveCount);
     }
-
-    private bool CheckLivingCells()
+    
+    private int CountAliveCells()
     {
+        int count = 0;
         for (int x = 0; x < _gridManager.Width; ++x)
         {
             for (int y = 0; y < _gridManager.Height; ++y)
             {
                 if (_gridManager.GetCellState(x, y))
                 {
-                    return true;
+                    ++count;
                 }
             }
         }
-        return false;
+        return count;
     }
 
-    private void ShowRoundResult(bool player1Won)
+    private void ShowRoundResult(int aliveCount)
     {
-        string result = player1Won ? "Player 1 Wins!" : "Player 2 Wins!";
-        resultsText.text = $"Round {_currentRound} Result: {result}\n" +
-                           $"Score: Player 1 - {_player1Wins} | Player 2 - {_player2Wins}";
-        
+        resultsText.text = $"Round {_currentRound} Complete!\nAlive Cockroaches: {aliveCount}";
+    
         resultsPanel.SetActive(true);
         endTurnButton.interactable = true;
         endTurnButton.onClick.RemoveAllListeners();
@@ -315,34 +301,63 @@ public class TournamentManager : MonoBehaviour
             StartNextRound();
         });
     }
+    
+    public void AbortTournament()
+    {
+        if (isTournament)
+        {
+            isTournament = false;
+            SetTogglesInteractable(true);
+            SetOuterUIInteractable(true);
+        
+            tournamentPanel.SetActive(false);
+            resultsPanel.SetActive(false);
+        
+            _currentState = TournamentState.Player1Zones;
+            _player1ZonesPlaced = 0;
+            _player2CellsPlaced = 0;
+        
+            _zoneManager.ClearAllZones();
+            _gridManager.RandomizeGrid(0f);
+        
+            UpdateUI();
+        }
+    }
 
     public void EndTournament()
     {
+        bool cellsAlive = CountAliveCells() > 0;
         string finalResult;
-        if (_player1Wins > _player2Wins)
+    
+        if (cellsAlive)
         {
-            finalResult = "Player 1 Wins the Tournament!";
-        }
-        else if (_player2Wins > _player1Wins)
-        {
-            finalResult = "Player 2 Wins the Tournament!";
+            finalResult = "COCKROACHES GOD WINS!";
         }
         else
         {
-            finalResult = "Tournament Ended in a Tie!";
+            finalResult = "EXTERMINATOR WINS!";
         }
 
-        resultsText.text = $"{finalResult}\nFinal Score: {_player1Wins} - {_player2Wins}";
+        resultsText.text = $"{finalResult}\nWhy: {(cellsAlive ? "Cockroaches Survived" : "All Cockroaches Eliminated")}";
         resultsPanel.SetActive(true);
 
+        StartCoroutine(SwitchToFreeModeAfterDelay(3f));
+    }
+
+    private IEnumerator SwitchToFreeModeAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+    
+        tournamentPanel.SetActive(false);
+        resultsPanel.SetActive(false);
+    
         isTournament = false;
         SetTogglesInteractable(true);
-        randomizeToggle.interactable = true;
+        SetOuterUIInteractable(true);
     
-        LifeControllerUI uiController = GetComponent<LifeControllerUI>();
-        System.Reflection.MethodInfo updateMethod = uiController.GetType().GetMethod("UpdateClearZonesButton", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        updateMethod?.Invoke(uiController, null);
+        _currentState = TournamentState.Player1Zones;
+        _player1ZonesPlaced = 0;
+        _player2CellsPlaced = 0;
     }
 }
 
