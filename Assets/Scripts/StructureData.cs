@@ -16,7 +16,7 @@ public class StructureData : ScriptableObject
     public string pattern = "X.X\n.X.\nXXX";
     
     [System.NonSerialized]
-    public bool[,] cells;
+    public bool[,] Cells;
 
     public void InitializeCells()
     {
@@ -26,8 +26,7 @@ public class StructureData : ScriptableObject
         }
         else
         {
-            // Create empty cells as fallback
-            cells = new bool[width, height];
+            Cells = new bool[width, height];
         }
     }
 
@@ -37,46 +36,22 @@ public class StructureData : ScriptableObject
         height = rows.Length;
         width = 0;
         
-        // Find maximum width
         foreach (string row in rows)
         {
             if (row.Trim().Length > width)
                 width = row.Trim().Length;
         }
         
-        cells = new bool[width, height];
+        Cells = new bool[width, height];
         
-        for (int y = 0; y < height; y++)
+        for (int y = 0; y < height; ++y)
         {
-            string row = rows[height - 1 - y].Trim(); // Reverse Y so pattern appears correctly
-            for (int x = 0; x < row.Length; x++)
+            string row = rows[height - 1 - y].Trim();
+            for (int x = 0; x < row.Length; ++x)
             {
                 char c = row[x];
-                cells[x, y] = (c == 'X' || c == 'x' || c == '1');
+                Cells[x, y] = c is 'X' or 'x' or '1';
             }
         }
-    }
-
-    [ContextMenu("Print Pattern Info")]
-    public void PrintPatternInfo()
-    {
-        InitializeCells();
-        Debug.Log($"Structure: {structureName}\nSize: {width}x{height}\nPattern:\n{PatternToString()}");
-    }
-
-    public string PatternToString()
-    {
-        if (cells == null) InitializeCells();
-        
-        string result = "";
-        for (int y = height - 1; y >= 0; y--)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                result += cells[x, y] ? "X" : ".";
-            }
-            result += "\n";
-        }
-        return result;
     }
 }

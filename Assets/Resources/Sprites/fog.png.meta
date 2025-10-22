@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 56c1176372df40c4a8e63c000bbe2c86
+guid: 18b18ca21c484d84ea057653c461e276
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5364075792921141791
-    second: Sprite-0001 1_0
+      213: -1766006069671443837
+    second: fog_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -109,11 +109,24 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sprite-0001 1_0
+      name: fog_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f1226597386017a40800000000000000
-      internalID: 5364075792921141791
+      spriteID: 382cc0a16d2ed77e0800000000000000
+      internalID: -1766006069671443837
       vertices: []
       indices: 
       edges: []
@@ -148,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Sprite-0001 1_0: 5364075792921141791
+      fog_0: -1766006069671443837
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

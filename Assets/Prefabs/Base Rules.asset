@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4005fa455a5d4fe4e835325fe7baebee, type: 3}
-  m_Name: BaseRules
+  m_Name: Base Rules
   m_EditorClassIdentifier: 
-  zoneName: GameOfLife
+  zoneName: New Zone
   minSurviveNeighbors: 2
   maxSurviveNeighbors: 3
   reproduceNeighbors: 3
-  zoneColor: {r: 1, g: 1, b: 1, a: 0}
+  zoneColor: {r: 1, g: 0, b: 0, a: 0.3}

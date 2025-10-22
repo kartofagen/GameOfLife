@@ -16,10 +16,9 @@ public class StructuresUI : MonoBehaviour
     [SerializeField] private Toggle cellsModeToggle;
     [SerializeField] private Toggle zonesModeToggle;
 
-    private GridManager gridManager;
-    private List<GameObject> currentButtons = new List<GameObject>();
-    private bool isInitialized = false;
-    private TournamentManager tournamentManager;
+    private GridManager _gridManager;
+    private List<GameObject> _currentButtons = new List<GameObject>();
+    private bool _isInitialized = false;
 
     private void Start()
     {
@@ -28,24 +27,23 @@ public class StructuresUI : MonoBehaviour
 
     private void InitializeUI()
     {
-        if (isInitialized) return;
+        if (_isInitialized) return;
 
-        gridManager = GetComponent<GridManager>();
-        tournamentManager = GetComponent<TournamentManager>();
+        _gridManager = GetComponent<GridManager>();
 
         cellsModeToggle.onValueChanged.AddListener(OnCellsModeToggled);
         zonesModeToggle.onValueChanged.AddListener(OnZonesModeToggled);
         
         UpdateUI();
         
-        isInitialized = true;
+        _isInitialized = true;
     }
 
     private void OnCellsModeToggled(bool isOn)
     {
-        if (isOn && isInitialized)
+        if (isOn && _isInitialized)
         {
-            SetMode(PlacementMode.Cells);
+            SetMode();
             CreateStructureButtons();
             zonesModeToggle.isOn = false;
             UpdateUI();
@@ -54,35 +52,35 @@ public class StructuresUI : MonoBehaviour
 
     private void OnZonesModeToggled(bool isOn)
     {
-        if (isOn && isInitialized)
+        if (isOn && _isInitialized)
         {
-            SetMode(PlacementMode.Zones);
+            SetMode();
             CreateZoneButtons();
             cellsModeToggle.isOn = false;
             UpdateUI();
         }
     }
 
-    private void SetMode(PlacementMode mode)
+    private void SetMode()
     {
-        if (!isInitialized) return;
+        if (!_isInitialized) return;
 
-        if (gridManager.IsPlacingStructure)
-            gridManager.CancelStructurePlacement();
+        if (_gridManager.IsPlacingStructure)
+            _gridManager.CancelStructurePlacement();
             
-        if (gridManager.IsPlacingZoneStructure)
-            gridManager.CancelZoneStructurePlacement();
+        if (_gridManager.IsPlacingZoneStructure)
+            _gridManager.CancelZoneStructurePlacement();
 
         ClearButtons();
     }
 
     private void CreateStructureButtons()
     {
-        if (!isInitialized || structureButtonPrefab == null) return;
+        if (!_isInitialized || structureButtonPrefab == null) return;
 
-        for (int i = 0; i < gridManager.AvailableStructures.Count; ++i)
+        for (int i = 0; i < _gridManager.AvailableStructures.Count; ++i)
         {
-            StructureData structure = gridManager.AvailableStructures[i];
+            StructureData structure = _gridManager.AvailableStructures[i];
             if (structure == null) continue;
 
             GameObject buttonObj = Instantiate(structureButtonPrefab, structuresContainer);
@@ -101,17 +99,17 @@ public class StructuresUI : MonoBehaviour
                 button.onClick.AddListener(() => SelectStructure(index));
             }
             
-            currentButtons.Add(buttonObj);
+            _currentButtons.Add(buttonObj);
         }
     }
 
     private void CreateZoneButtons()
     {
-        if (!isInitialized || zoneButtonPrefab == null) return;
+        if (!_isInitialized || zoneButtonPrefab == null) return;
 
-        for (int i = 0; i < gridManager.AvailableZoneStructures.Count; i++)
+        for (int i = 0; i < _gridManager.AvailableZoneStructures.Count; ++i)
         {
-            ZoneStructureData zoneStructure = gridManager.AvailableZoneStructures[i];
+            ZoneStructureData zoneStructure = _gridManager.AvailableZoneStructures[i];
             if (zoneStructure == null) continue;
 
             GameObject buttonObj = Instantiate(zoneButtonPrefab, structuresContainer);
@@ -126,7 +124,9 @@ public class StructuresUI : MonoBehaviour
             Image buttonImage = buttonObj.GetComponent<Image>();
             if (buttonImage != null)
             {
-                buttonImage.color = new Color(zoneStructure.zoneColor.r, zoneStructure.zoneColor.g, zoneStructure.zoneColor.b, 0.3f);
+                buttonImage.color = new Color(zoneStructure.zoneColor.r,
+                                              zoneStructure.zoneColor.g,
+                                              zoneStructure.zoneColor.b, 0.3f);
             }
             
             Button button = buttonObj.GetComponent<Button>();
@@ -136,45 +136,45 @@ public class StructuresUI : MonoBehaviour
                 button.onClick.AddListener(() => SelectZoneStructure(index));
             }
             
-            currentButtons.Add(buttonObj);
+            _currentButtons.Add(buttonObj);
         }
     }
 
     private void SelectStructure(int index)
     {
-        if (!isInitialized || index < 0 || index >= gridManager.AvailableStructures.Count) return;
+        if (!_isInitialized || index < 0 || index >= _gridManager.AvailableStructures.Count) return;
 
-        gridManager.StartStructurePlacement(gridManager.AvailableStructures[index]);
+        _gridManager.StartStructurePlacement(_gridManager.AvailableStructures[index]);
         UpdateUI();
     }
 
     private void SelectZoneStructure(int index)
     {
-        if (!isInitialized || index < 0 || index >= gridManager.AvailableZoneStructures.Count) return;
+        if (!_isInitialized || index < 0 || index >= _gridManager.AvailableZoneStructures.Count) return;
 
-        gridManager.StartZoneStructurePlacement(gridManager.AvailableZoneStructures[index]);
+        _gridManager.StartZoneStructurePlacement(_gridManager.AvailableZoneStructures[index]);
         UpdateUI();
     }
 
     private void ClearButtons()
     {
-        foreach (GameObject button in currentButtons)
+        foreach (GameObject button in _currentButtons)
         {
             if (button != null)
                 Destroy(button);
         }
-        currentButtons.Clear();
+        _currentButtons.Clear();
     }
 
     private void UpdateUI()
     {
-        if (!isInitialized) return;
+        if (!_isInitialized) return;
 
         if (cellsModeToggle.isOn)
         {
             currentModeText.text = "CELLS MODE";
             
-            if (gridManager.IsPlacingStructure)
+            if (_gridManager.IsPlacingStructure)
             {
                 instructionText.text = "Placing Structure\n• LMB: Place\n• RMB: Cancel\n• R: Rotate";
             }
@@ -187,7 +187,7 @@ public class StructuresUI : MonoBehaviour
         {
             currentModeText.text = "ZONES MODE";
             
-            if (gridManager.IsPlacingZoneStructure)
+            if (_gridManager.IsPlacingZoneStructure)
             {
                 instructionText.text = "Placing Zone\n• LMB: Place\n• RMB: Cancel";
             }
@@ -200,9 +200,9 @@ public class StructuresUI : MonoBehaviour
 
     private void Update()
     {
-        if (!isInitialized) return;
+        if (!_isInitialized) return;
 
-        if (gridManager.IsPlacingStructure || gridManager.IsPlacingZoneStructure)
+        if (_gridManager.IsPlacingStructure || _gridManager.IsPlacingZoneStructure)
         {
             UpdateUI();
         }
@@ -214,11 +214,5 @@ public class StructuresUI : MonoBehaviour
             cellsModeToggle.onValueChanged.RemoveListener(OnCellsModeToggled);
         if (zonesModeToggle != null)
             zonesModeToggle.onValueChanged.RemoveListener(OnZonesModeToggled);
-    }
-
-    public enum PlacementMode
-    {
-        Cells,
-        Zones
     }
 }

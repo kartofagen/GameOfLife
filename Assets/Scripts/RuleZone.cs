@@ -9,7 +9,7 @@ public class RuleZone : ScriptableObject
     [Range(0, 8)] public int maxSurviveNeighbors = 3;
     [Range(0, 8)] public int reproduceNeighbors = 3;
     public Color zoneColor = new Color(1f, 0f, 0f, 0.3f);
-    public bool[,] zoneCells;
+    public bool[,] ZoneCells;
     
-    [System.NonSerialized] public List<GameObject> zoneVisuals = new List<GameObject>();
+    [System.NonSerialized] public List<GameObject> ZoneVisuals = new List<GameObject>();
 }

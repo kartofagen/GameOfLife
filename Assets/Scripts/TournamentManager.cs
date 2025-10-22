@@ -14,38 +14,41 @@ public class TournamentManager : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI tournamentStatusText;
+    [SerializeField] private GameObject tournamentPanel;
     [SerializeField] private TextMeshProUGUI playerTurnText;
-    [SerializeField] private TextMeshProUGUI zonesRemainingText;
-    [SerializeField] private TextMeshProUGUI cellsRemainingText;
+    [SerializeField] private TextMeshProUGUI remainingText;
     [SerializeField] private GameObject resultsPanel;
     [SerializeField] private TextMeshProUGUI resultsText;
-    [SerializeField] private Button nextRoundButton;
+    [SerializeField] private Button endTurnButton;
 
     [Header("Mode Toggles")]
     [SerializeField] private Toggle cellsModeToggle;
     [SerializeField] private Toggle zonesModeToggle;
 
-    private LifeController lifeController;
-    private GridManager gridManager;
-    private RuleZoneManager zoneManager;
-    private StructuresUI structuresUI;
+    private LifeController _lifeController;
+    private GridManager _gridManager;
+    private RuleZoneManager _zoneManager;
+    private StructuresUI _structuresUI;
 
-    private int currentRound = 0;
-    private int player1Wins = 0;
-    private int player2Wins = 0;
-    private TournamentState currentState = TournamentState.Player1Zones;
-    private int player1ZonesPlaced = 0;
-    private int player2CellsPlaced = 0;
+    private int _currentRound = 0;
+    private int _player1Wins = 0;
+    private int _player2Wins = 0;
+    private TournamentState _currentState = TournamentState.Player1Zones;
+    private int _player1ZonesPlaced = 0;
+    private int _player2CellsPlaced = 0;
 
     public bool TournamentMode => tournamentMode;
-    public TournamentState CurrentState => currentState;
+    public TournamentState CurrentState => _currentState;
 
     private void Start()
     {
-        lifeController = GetComponent<LifeController>();
-        gridManager = GetComponent<GridManager>();
-        zoneManager = GetComponent<RuleZoneManager>();
-        structuresUI = GetComponent<StructuresUI>();
+        _lifeController = GetComponent<LifeController>();
+        _gridManager = GetComponent<GridManager>();
+        _zoneManager = GetComponent<RuleZoneManager>();
+        _structuresUI = GetComponent<StructuresUI>();
+
+        endTurnButton.onClick.RemoveAllListeners();
+        endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
 
         if (tournamentMode)
         {
@@ -53,47 +56,63 @@ public class TournamentManager : MonoBehaviour
         }
         else
         {
-            tournamentStatusText.gameObject.SetActive(false);
-            playerTurnText.gameObject.SetActive(false);
+            tournamentPanel.SetActive(false);
         }
     }
 
     public void StartTournament()
     {
-        currentRound = 0;
-        player1Wins = 0;
-        player2Wins = 0;
+        _player1ZonesPlaced = 0;
+        _player2CellsPlaced = 0;
+        _zoneManager.ClearAllZones();
+        _gridManager.RandomizeGrid(0f);
+        _currentRound = 0;
+        
+        _player1Wins = 0;
+        _player2Wins = 0;
         tournamentMode = true;
         SetTogglesInteractable(false);
         
-        tournamentStatusText.gameObject.SetActive(true);
-        playerTurnText.gameObject.SetActive(true);
+        tournamentPanel.SetActive(true);
         resultsPanel.SetActive(false);
 
         StartNextRound();
     }
     
-    public void SetTogglesInteractable(bool interactable)
+    private void OnEndTurnButtonClicked()
     {
-        if (cellsModeToggle != null) cellsModeToggle.interactable = interactable;
-        if (zonesModeToggle != null) zonesModeToggle.interactable = interactable;
+        switch (_currentState)
+        {
+            case TournamentState.Player1Zones:
+                AdvanceToPlayer2();
+                break;
+            case TournamentState.Player2Cells:
+                StartSimulation();
+                break;
+        }
+    }
+
+    private void SetTogglesInteractable(bool interactable)
+    {
+        if (cellsModeToggle) cellsModeToggle.interactable = interactable;
+        if (zonesModeToggle) zonesModeToggle.interactable = interactable;
     }
 
     private void StartNextRound()
     {
-        ++currentRound;
-        if (currentRound > totalRounds)
+        ++_currentRound;
+        if (_currentRound > totalRounds)
         {
             EndTournament();
             return;
         }
+        
+        zonesModeToggle.isOn = true;
+        cellsModeToggle.isOn = false;
+        endTurnButton.onClick.RemoveAllListeners();
+        endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
 
-        player1ZonesPlaced = 0;
-        player2CellsPlaced = 0;
-        zoneManager.ClearAllZones();
-        gridManager.RandomizeGrid(0f);
-
-        currentState = TournamentState.Player1Zones;
+        _currentState = TournamentState.Player1Zones;
         UpdateUI();
         UpdateStructuresUI();
     }
@@ -107,43 +126,31 @@ public class TournamentManager : MonoBehaviour
 
     private void UpdateUI()
     {
-        tournamentStatusText.text = $"Round: {currentRound}/{totalRounds}";
+        tournamentStatusText.text = $"Round: {_currentRound}/{totalRounds}";
         
-        switch (currentState)
+        switch (_currentState)
         {
             case TournamentState.Player1Zones:
-                playerTurnText.text = "Player 1: Place Zones";
-                zonesRemainingText.text = $"Zones Remaining: {maxZonesPerPlayer - player1ZonesPlaced}";
-                cellsRemainingText.text = "";
-                zonesModeToggle.isOn = true;
-                cellsModeToggle.isOn = false;
+                remainingText.text = $"Zones Remaining: {maxZonesPerPlayer - _player1ZonesPlaced}";
                 break;
             case TournamentState.Player2Cells:
                 playerTurnText.text = "Player 2: Place Cells";
-                zonesRemainingText.text = "";
-                cellsRemainingText.text = $"Cells Remaining: {maxCellsPerPlayer - player2CellsPlaced}";
-                zonesModeToggle.isOn = false;
-                cellsModeToggle.isOn = true;
+                remainingText.text = $"Cells Remaining: {maxCellsPerPlayer - _player2CellsPlaced}";
                 break;
             case TournamentState.Simulating:
                 playerTurnText.text = "Simulating...";
-                zonesRemainingText.text = "";
-                cellsRemainingText.text = "";
-                zonesModeToggle.isOn = false;
-                cellsModeToggle.isOn = true;
+                remainingText.text = "";
                 break;
         }
     }
 
     private void UpdateStructuresUI()
     {
-        // Force the correct mode based on tournament state
-        if (currentState == TournamentState.Player1Zones)
+        if (_currentState == TournamentState.Player1Zones)
         {
-            // Force zones mode for player 1
-            if (structuresUI != null)
+            if (_structuresUI)
             {
-                var toggles = structuresUI.GetComponentsInChildren<Toggle>();
+                var toggles = _structuresUI.GetComponentsInChildren<Toggle>();
                 foreach (var toggle in toggles)
                 {
                     if (toggle.name.Contains("Zones")) toggle.isOn = true;
@@ -151,12 +158,11 @@ public class TournamentManager : MonoBehaviour
                 }
             }
         }
-        else if (currentState == TournamentState.Player2Cells)
+        else if (_currentState == TournamentState.Player2Cells)
         {
-            // Force cells mode for player 2
-            if (structuresUI != null)
+            if (_structuresUI)
             {
-                var toggles = structuresUI.GetComponentsInChildren<Toggle>();
+                var toggles = _structuresUI.GetComponentsInChildren<Toggle>();
                 foreach (var toggle in toggles)
                 {
                     if (toggle.name.Contains("Zones")) toggle.isOn = false;
@@ -169,25 +175,24 @@ public class TournamentManager : MonoBehaviour
     public bool CanPlaceZone()
     {
         return tournamentMode && 
-               currentState == TournamentState.Player1Zones && 
-               player1ZonesPlaced < maxZonesPerPlayer;
+               _currentState == TournamentState.Player1Zones && 
+               _player1ZonesPlaced < maxZonesPerPlayer;
     }
 
     public bool CanPlaceCell()
     {
         return tournamentMode && 
-               currentState == TournamentState.Player2Cells && 
-               player2CellsPlaced < maxCellsPerPlayer;
+               _currentState == TournamentState.Player2Cells && 
+               _player2CellsPlaced < maxCellsPerPlayer;
     }
 
     public void OnZonePlaced()
     {
         if (CanPlaceZone())
         {
-            player1ZonesPlaced++;
+            ++_player1ZonesPlaced;
             
-            // Auto-advance if player has used all zones
-            if (player1ZonesPlaced >= maxZonesPerPlayer)
+            if (_player1ZonesPlaced >= maxZonesPerPlayer)
             {
                 AdvanceToPlayer2();
             }
@@ -198,68 +203,63 @@ public class TournamentManager : MonoBehaviour
     {
         if (CanPlaceCell())
         {
-            player2CellsPlaced++;
+            ++_player2CellsPlaced;
             
-            // Auto-advance if player has used all cells
-            if (player2CellsPlaced >= maxCellsPerPlayer)
+            if (_player2CellsPlaced >= maxCellsPerPlayer)
             {
                 StartSimulation();
             }
         }
     }
 
-    public void AdvanceToPlayer2()
+    private void AdvanceToPlayer2()
     {
-        if (currentState == TournamentState.Player1Zones)
-        {
-            currentState = TournamentState.Player2Cells;
-            UpdateStructuresUI();
-        }
+        zonesModeToggle.isOn = false;
+        cellsModeToggle.isOn = true;
+        _currentState = TournamentState.Player2Cells;
+        UpdateStructuresUI();
     }
 
-    public void StartSimulation()
+    private void StartSimulation()
     {
-        if (currentState == TournamentState.Player2Cells)
-        {
-            currentState = TournamentState.Simulating;
-            StartCoroutine(RunSimulation());
-        }
+        zonesModeToggle.isOn = false;
+        cellsModeToggle.isOn = true;
+        endTurnButton.interactable = false;
+        _currentState = TournamentState.Simulating;
+        StartCoroutine(RunSimulation());
     }
 
     private IEnumerator RunSimulation()
     {
-        lifeController.ToggleSimulation();
+        _lifeController.ToggleSimulation();
         
-        // Run simulations
-        for (int i = 0; i < simulationsPerRound; i++)
+        for (int i = 0; i < simulationsPerRound; ++i)
         {
-            yield return new WaitForSeconds(lifeController.UpdateInterval);
+            yield return new WaitForSeconds(_lifeController.UpdateInterval);
         }
         
-        lifeController.ToggleSimulation();
+        _lifeController.ToggleSimulation();
         
-        // Check results
         bool cellsAlive = CheckLivingCells();
         if (cellsAlive)
         {
-            player1Wins++;
+            ++_player1Wins;
         }
         else
         {
-            player2Wins++;
+            ++_player2Wins;
         }
         
-        // Show round result and wait for next round
         ShowRoundResult(cellsAlive);
     }
 
     private bool CheckLivingCells()
     {
-        for (int x = 0; x < gridManager.Width; x++)
+        for (int x = 0; x < _gridManager.Width; ++x)
         {
-            for (int y = 0; y < gridManager.Height; y++)
+            for (int y = 0; y < _gridManager.Height; ++y)
             {
-                if (gridManager.GetCellState(x, y))
+                if (_gridManager.GetCellState(x, y))
                 {
                     return true;
                 }
@@ -271,12 +271,13 @@ public class TournamentManager : MonoBehaviour
     private void ShowRoundResult(bool player1Won)
     {
         string result = player1Won ? "Player 1 Wins!" : "Player 2 Wins!";
-        resultsText.text = $"Round {currentRound} Result: {result}\n" +
-                          $"Score: Player 1 - {player1Wins} | Player 2 - {player2Wins}";
+        resultsText.text = $"Round {_currentRound} Result: {result}\n" +
+                           $"Score: Player 1 - {_player1Wins} | Player 2 - {_player2Wins}";
         
         resultsPanel.SetActive(true);
-        nextRoundButton.onClick.RemoveAllListeners();
-        nextRoundButton.onClick.AddListener(() => {
+        endTurnButton.interactable = true;
+        endTurnButton.onClick.RemoveAllListeners();
+        endTurnButton.onClick.AddListener(() => {
             resultsPanel.SetActive(false);
             StartNextRound();
         });
@@ -285,11 +286,11 @@ public class TournamentManager : MonoBehaviour
     public void EndTournament()
     {
         string finalResult;
-        if (player1Wins > player2Wins)
+        if (_player1Wins > _player2Wins)
         {
             finalResult = "Player 1 Wins the Tournament!";
         }
-        else if (player2Wins > player1Wins)
+        else if (_player2Wins > _player1Wins)
         {
             finalResult = "Player 2 Wins the Tournament!";
         }
@@ -298,7 +299,7 @@ public class TournamentManager : MonoBehaviour
             finalResult = "Tournament Ended in a Tie!";
         }
 
-        resultsText.text = $"{finalResult}\nFinal Score: {player1Wins} - {player2Wins}";
+        resultsText.text = $"{finalResult}\nFinal Score: {_player1Wins} - {_player2Wins}";
         resultsPanel.SetActive(true);
 
         tournamentMode = false;

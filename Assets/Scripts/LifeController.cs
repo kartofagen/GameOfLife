@@ -6,168 +6,163 @@ public class LifeController : MonoBehaviour
     [SerializeField][Range(0, 1f)] private float randomFillShare = 0.5f;
     [SerializeField] private RuleZone defaultRules;
 
-    private GridManager gridManager;
-    private RuleZoneManager zoneManager;
-    private InputActionsHandler inputHandler;
-    private TournamentManager tournamentManager;
+    private GridManager _gridManager;
+    private RuleZoneManager _zoneManager;
+    private InputActionsHandler _inputHandler;
+    private TournamentManager _tournamentManager;
 
-    private bool isSimulating = false;
-    private float timer = 0f;
+    private bool _isSimulating = false;
+    private float _timer = 0f;
     
-    public bool IsSimulating => isSimulating;
+    public bool IsSimulating => _isSimulating;
     public float UpdateInterval => updateInterval;
     public float RandomFillShare => randomFillShare;
 
     private void Start()
     {
-        gridManager = GetComponent<GridManager>();
-        zoneManager = GetComponent<RuleZoneManager>();
-        inputHandler = GetComponent<InputActionsHandler>();
-        tournamentManager = GetComponent<TournamentManager>();
+        _gridManager = GetComponent<GridManager>();
+        _zoneManager = GetComponent<RuleZoneManager>();
+        _inputHandler = GetComponent<InputActionsHandler>();
+        _tournamentManager = GetComponent<TournamentManager>();
 
-        gridManager.InitializeGrid();
-        gridManager.CreateVisualGrid();
-        zoneManager.Initialize(gridManager);
+        _gridManager.InitializeGrid();
+        _gridManager.CreateVisualGrid();
+        _zoneManager.Initialize(_gridManager);
         SetupInputHandlers();
     }
 
     private void Update()
     {
-        if (!isSimulating) return;
+        if (!_isSimulating) return;
 
-        timer += Time.deltaTime;
-        if (timer >= updateInterval)
+        _timer += Time.deltaTime;
+        if (_timer >= updateInterval)
         {
-            timer = 0f;
+            _timer = 0f;
             ComputeNextGeneration();
-            gridManager.UpdateGridVisuals();
+            _gridManager.UpdateGridVisuals();
         }
     }
     
     private void SetupInputHandlers()
     {
-        inputHandler.onToggleSimulation.AddListener(ToggleSimulation);
-        inputHandler.onRotateStructure.AddListener(OnRotateStructure);
-        inputHandler.onMouseMove.AddListener(OnMouseMove);
-        inputHandler.onMouseClick.AddListener(OnMouseClick);
-        inputHandler.onMouseRightClick.AddListener(OnMouseRightClick);
+        _inputHandler.onToggleSimulation.AddListener(ToggleSimulation);
+        _inputHandler.onRotateStructure.AddListener(OnRotateStructure);
+        _inputHandler.onMouseMove.AddListener(OnMouseMove);
+        _inputHandler.onMouseClick.AddListener(OnMouseClick);
+        _inputHandler.onMouseRightClick.AddListener(OnMouseRightClick);
     }
     
     private void OnRotateStructure()
     {
-        if (gridManager.IsPlacingStructure)
-            gridManager.RotateStructure();
+        if (_gridManager.IsPlacingStructure)
+            _gridManager.RotateStructure();
     }
     
     private void OnMouseClick(Vector2 mousePosition)
     {
-        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+        Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
 
-        // Проверяем турнирный режим
-        if (tournamentManager != null && tournamentManager.TournamentMode)
+        if (_tournamentManager != null && _tournamentManager.TournamentMode)
         {
-            if (tournamentManager.CurrentState == TournamentState.Player1Zones && 
-                gridManager.IsPlacingZoneStructure)
+            if (_tournamentManager.CurrentState == TournamentState.Player1Zones && 
+                _gridManager.IsPlacingZoneStructure)
             {
-                if (gridManager.PlaceZoneStructure(gridPos) && tournamentManager.CanPlaceZone())
+                if (_gridManager.PlaceZoneStructure(gridPos) && _tournamentManager.CanPlaceZone())
                 {
-                    tournamentManager.OnZonePlaced();
+                    _tournamentManager.OnZonePlaced();
                 }
             }
-            else if (tournamentManager.CurrentState == TournamentState.Player2Cells)
+            else if (_tournamentManager.CurrentState == TournamentState.Player2Cells)
             {
-                if (!gridManager.IsWall(gridPos.x, gridPos.y) && tournamentManager.CanPlaceCell())
+                if (!_gridManager.IsWall(gridPos.x, gridPos.y) && _tournamentManager.CanPlaceCell())
                 {
-                    gridManager.SetCellState(gridPos.x, gridPos.y, true);
-                    tournamentManager.OnCellPlaced();
+                    _gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                    _tournamentManager.OnCellPlaced();
                 }
             }
         }
         else
         {
-            if (gridManager.IsPlacingStructure)
+            if (_gridManager.IsPlacingStructure)
             {
-                gridManager.PlaceStructure(gridPos);
+                _gridManager.PlaceStructure(gridPos);
             }
-            else if (gridManager.IsPlacingZoneStructure)
+            else if (_gridManager.IsPlacingZoneStructure)
             {
-                gridManager.PlaceZoneStructure(gridPos);
+                _gridManager.PlaceZoneStructure(gridPos);
             }
             else
             {
-                // Default cell editing in Cells mode
-                gridManager.SetCellState(gridPos.x, gridPos.y, true);
+                _gridManager.SetCellState(gridPos.x, gridPos.y, true);
             }
         }
     }
 
     private void OnMouseRightClick(Vector2 mousePosition)
     {
-        // В турнирном режиме правый клик только для отмены размещения
-        if (tournamentManager != null && tournamentManager.TournamentMode)
+        if (_tournamentManager != null && _tournamentManager.TournamentMode)
         {
-            if (gridManager.IsPlacingStructure)
+            if (_gridManager.IsPlacingStructure)
             {
-                gridManager.CancelStructurePlacement();
+                _gridManager.CancelStructurePlacement();
             }
-            else if (gridManager.IsPlacingZoneStructure)
+            else if (_gridManager.IsPlacingZoneStructure)
             {
-                gridManager.CancelZoneStructurePlacement();
+                _gridManager.CancelZoneStructurePlacement();
             }
         }
         else
         {
-            if (gridManager.IsPlacingStructure)
+            if (_gridManager.IsPlacingStructure)
             {
-                gridManager.CancelStructurePlacement();
+                _gridManager.CancelStructurePlacement();
                 return;
             }
-            else if (gridManager.IsPlacingZoneStructure)
+            else if (_gridManager.IsPlacingZoneStructure)
             {
-                gridManager.CancelZoneStructurePlacement();
+                _gridManager.CancelZoneStructurePlacement();
                 return;
             }
 
-            // Default cell editing in Cells mode
-            Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+            Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
             Vector2Int gridPos = WorldToGridPosition(worldPos);
-            gridManager.SetCellState(gridPos.x, gridPos.y, false);
+            _gridManager.SetCellState(gridPos.x, gridPos.y, false);
         }
     }
 
     private void OnMouseMove(Vector2 mousePosition)
     {
-        Vector2 worldPos = inputHandler.GetMouseWorldPosition();
+        Vector2 worldPos = _inputHandler.GetMouseWorldPosition();
         Vector2Int gridPos = WorldToGridPosition(worldPos);
     
-        // Update preview for both structures and zones
-        if (gridManager.IsPlacingStructure)
+        if (_gridManager.IsPlacingStructure)
         {
-            gridManager.UpdateStructurePreview(gridPos);
+            _gridManager.UpdateStructurePreview(gridPos);
         }
-        else if (gridManager.IsPlacingZoneStructure)
+        else if (_gridManager.IsPlacingZoneStructure)
         {
-            gridManager.UpdateZoneStructurePreview(gridPos);
+            _gridManager.UpdateZoneStructurePreview(gridPos);
         }
     }
     
     private Vector2Int WorldToGridPosition(Vector2 worldPosition)
     {
         Vector3 localPos = worldPosition - (Vector2)transform.position;
-        int x = Mathf.RoundToInt(localPos.x / gridManager.CellSize);
-        int y = Mathf.RoundToInt(localPos.y / gridManager.CellSize);
+        int x = Mathf.RoundToInt(localPos.x / _gridManager.CellSize);
+        int y = Mathf.RoundToInt(localPos.y / _gridManager.CellSize);
         return new Vector2Int(x, y);
     }
 
     public void RandomizeGrid()
     {
-        gridManager.RandomizeGrid(randomFillShare);
+        _gridManager.RandomizeGrid(randomFillShare);
     }
 
     public void ToggleSimulation()
     {
-        isSimulating = !isSimulating;
+        _isSimulating = !_isSimulating;
     }
 
     public void SetUpdateInterval(float interval)
@@ -182,47 +177,49 @@ public class LifeController : MonoBehaviour
 
     private void ComputeNextGeneration()
     {
-        bool[,] newGrid = new bool[gridManager.Width, gridManager.Height];
-
-        for (int x = 0; x < gridManager.Width; ++x)
+        bool[][] newGrid = new bool[_gridManager.Width][];
+        for (int index = 0; index < _gridManager.Width; index++)
         {
-            for (int y = 0; y < gridManager.Height; ++y)
+            newGrid[index] = new bool[_gridManager.Height];
+        }
+
+        for (int x = 0; x < _gridManager.Width; ++x)
+        {
+            for (int y = 0; y < _gridManager.Height; ++y)
             {
-                if (gridManager.IsWall(x, y))
+                if (_gridManager.IsWall(x, y))
                 {
-                    newGrid[x, y] = false;
+                    newGrid[x][y] = false;
                     continue;
                 }
             
-                // Get zone for cell - this now uses the properly managed zones
-                RuleZone zone = zoneManager.GetZoneForCell(x, y);
-                int minSurvive = zone != null ? zone.minSurviveNeighbors : defaultRules.minSurviveNeighbors;
-                int maxSurvive = zone != null ? zone.maxSurviveNeighbors : defaultRules.maxSurviveNeighbors;
-                int reproduce = zone != null ? zone.reproduceNeighbors : defaultRules.reproduceNeighbors;
+                RuleZone zone = _zoneManager.GetZoneForCell(x, y);
+                int minSurvive = zone ? zone.minSurviveNeighbors : defaultRules.minSurviveNeighbors;
+                int maxSurvive = zone ? zone.maxSurviveNeighbors : defaultRules.maxSurviveNeighbors;
+                int reproduce = zone ? zone.reproduceNeighbors : defaultRules.reproduceNeighbors;
 
                 int liveNeighbors = CountLiveNeighbors(x, y);
-                bool isAlive = gridManager.Grid[x, y];
+                bool isAlive = _gridManager.Grid[x, y];
 
                 if (isAlive)
                 {
-                    newGrid[x, y] = liveNeighbors >= minSurvive && 
+                    newGrid[x][y] = liveNeighbors >= minSurvive && 
                                     liveNeighbors <= maxSurvive;
                 }
                 else
                 {
-                    newGrid[x, y] = liveNeighbors == reproduce;
+                    newGrid[x][y] = liveNeighbors == reproduce;
                 }
             }
         }
 
-        // Apply new generation
-        for (int x = 0; x < gridManager.Width; ++x)
+        for (int x = 0; x < _gridManager.Width; ++x)
         {
-            for (int y = 0; y < gridManager.Height; ++y)
+            for (int y = 0; y < _gridManager.Height; ++y)
             {
-                if (!gridManager.IsWall(x, y))
+                if (!_gridManager.IsWall(x, y))
                 {
-                    gridManager.SetCellState(x, y, newGrid[x, y]);
+                    _gridManager.SetCellState(x, y, newGrid[x][y]);
                 }
             }
         }
@@ -241,17 +238,17 @@ public class LifeController : MonoBehaviour
                 int checkX = x + i;
                 int checkY = y + j;
 
-                if (!(0 <= checkX && checkX < gridManager.Width && 0 <= checkY && checkY < gridManager.Height))
+                if (!(0 <= checkX && checkX < _gridManager.Width && 0 <= checkY && checkY < _gridManager.Height))
                 {
                     continue;
                 }
                 
-                if (gridManager.IsWall(checkX, checkY))
+                if (_gridManager.IsWall(checkX, checkY))
                     continue;
 
-                if (gridManager.Grid[checkX, checkY])
+                if (_gridManager.Grid[checkX, checkY])
                 {
-                    count++;
+                    ++count;
                 }
             }
         }

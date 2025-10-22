@@ -17,16 +17,16 @@ public class LifeAnimation : MonoBehaviour
     [SerializeField] private Sprite death2Sprite;
     [SerializeField] private Sprite deadSprite;
 
-    private bool isAlive = false;
-    private SpriteRenderer spriteRenderer;
-    private Coroutine currentAnimation;
+    private bool _isAlive = false;
+    private SpriteRenderer _spriteRenderer;
+    private Coroutine _currentAnimation;
 
     private void Start()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_spriteRenderer == null)
         {
-            spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
+            _spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
         }
         
         UpdateSpriteImmediate();
@@ -34,45 +34,45 @@ public class LifeAnimation : MonoBehaviour
 
     public void SetAlive(bool state)
     {
-        if (isAlive == state) return;
+        if (_isAlive == state) return;
         
-        isAlive = state;
+        _isAlive = state;
         
-        if (currentAnimation != null)
+        if (_currentAnimation != null)
         {
-            StopCoroutine(currentAnimation);
+            StopCoroutine(_currentAnimation);
         }
         
-        currentAnimation = StartCoroutine(AnimateStateChange());
+        _currentAnimation = StartCoroutine(AnimateStateChange());
     }
 
     private IEnumerator AnimateStateChange()
     {
-        if (isAlive)
+        if (_isAlive)
         {
-            spriteRenderer.sprite = birthSprite;
+            _spriteRenderer.sprite = birthSprite;
             yield return new WaitForSeconds(birthAnimationDuration);
-            spriteRenderer.sprite = growSprite;
+            _spriteRenderer.sprite = growSprite;
             yield return new WaitForSeconds(growAnimationDuration);
-            spriteRenderer.sprite = aliveSprite;
+            _spriteRenderer.sprite = aliveSprite;
         }
         else
         {
-            spriteRenderer.sprite = deathSprite;
+            _spriteRenderer.sprite = deathSprite;
             yield return new WaitForSeconds(deathAnimationDuration);
-            spriteRenderer.sprite = death2Sprite;
+            _spriteRenderer.sprite = death2Sprite;
             yield return new WaitForSeconds(death2AnimationDuration);
-            spriteRenderer.sprite = deadSprite;
+            _spriteRenderer.sprite = deadSprite;
         }
         
-        currentAnimation = null;
+        _currentAnimation = null;
     }
 
     private void UpdateSpriteImmediate()
     {
-        if (spriteRenderer != null)
+        if (_spriteRenderer != null)
         {
-            spriteRenderer.sprite = isAlive ? aliveSprite : deadSprite;
+            _spriteRenderer.sprite = _isAlive ? aliveSprite : deadSprite;
         }
     }
 }

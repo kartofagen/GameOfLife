@@ -16,18 +16,15 @@ public class LifeControllerUI : MonoBehaviour
     [SerializeField] private Button tournamentModeButton;
     [SerializeField] private TextMeshProUGUI tournamentButtonText;
 
-    private LifeController lifeController;
-    private GridManager gridManager;
-    private TournamentManager tournamentManager;
+    private LifeController _lifeController;
+    private GridManager _gridManager;
+    private TournamentManager _tournamentManager;
 
     private void Start()
     {
-        lifeController = GetComponent<LifeController>();
-        gridManager = GetComponent<GridManager>();
-        tournamentManager = GetComponent<TournamentManager>();
-        
-        updateIntervalSlider.value = lifeController.UpdateInterval;
-        randomFillSlider.value = lifeController.RandomFillShare;
+        _lifeController = GetComponent<LifeController>();
+        _gridManager = GetComponent<GridManager>();
+        _tournamentManager = GetComponent<TournamentManager>();
         
         updateIntervalSlider.onValueChanged.AddListener(OnUpdateIntervalChanged);
         simulationButton.onClick.AddListener(OnSimulationButtonClicked);
@@ -40,7 +37,8 @@ public class LifeControllerUI : MonoBehaviour
             UpdateTournamentButtonText();
         }
         
-        UpdateUI();
+        UpdateSimulationButtonText();
+        UpdateSliders();
     }
 
     private void Update()
@@ -50,13 +48,13 @@ public class LifeControllerUI : MonoBehaviour
     
     private void OnTournamentModeButtonClicked()
     {
-        if (tournamentManager.TournamentMode)
+        if (_tournamentManager.TournamentMode)
         {
-            tournamentManager.EndTournament();
+            _tournamentManager.EndTournament();
         }
         else
         {
-            tournamentManager.StartTournament();
+            _tournamentManager.StartTournament();
         }
 
         UpdateTournamentButtonText();
@@ -66,31 +64,30 @@ public class LifeControllerUI : MonoBehaviour
     {
         if (tournamentButtonText != null)
         {
-            tournamentButtonText.text = tournamentManager.TournamentMode ? 
-                "Free Mode" : "Tournament";
+            tournamentButtonText.text = _tournamentManager.TournamentMode ? "Free Mode" : "Tournament";
         }
     }
 
     private void OnUpdateIntervalChanged(float value)
     {
-        lifeController.SetUpdateInterval(value);
+        _lifeController.SetUpdateInterval(value);
         updateIntervalValueText.text = value.ToString("F2") + "s";
     }
 
     private void OnRandomFillSliderChanged(float value)
     {
-        lifeController.SetRandomFillShare(value);
+        _lifeController.SetRandomFillShare(value);
         randomFillValueText.text = (value * 100).ToString("F0") + "%";
         
         if (randomFillToggle.isOn)
         {
-            lifeController.RandomizeGrid();
+            _lifeController.RandomizeGrid();
         }
     }
 
     private void OnSimulationButtonClicked()
     {
-        lifeController.ToggleSimulation();
+        _lifeController.ToggleSimulation();
         UpdateSimulationButtonText();
     }
 
@@ -98,35 +95,36 @@ public class LifeControllerUI : MonoBehaviour
     {
         if (isOn)
         {
-            lifeController.RandomizeGrid();
+            _lifeController.RandomizeGrid();
         }
     }
 
     private void UpdateAliveCellsCount()
     {
         int aliveCount = 0;
-        for (int x = 0; x < gridManager.Width; x++)
+        for (int x = 0; x < _gridManager.Width; ++x)
         {
-            for (int y = 0; y < gridManager.Height; y++)
+            for (int y = 0; y < _gridManager.Height; ++y)
             {
-                if (gridManager.GetCellState(x, y))
+                if (_gridManager.GetCellState(x, y))
                 {
-                    aliveCount++;
+                    ++aliveCount;
                 }
             }
         }
         aliveCellsText.text = $"Alive Cells: {aliveCount}";
     }
 
-    public void UpdateSimulationButtonText()
+    private void UpdateSimulationButtonText()
     {
-        simulationButtonText.text = lifeController.IsSimulating ? "Pause" : "Start";
+        simulationButtonText.text = _lifeController.IsSimulating ? "Pause" : "Start";
     }
-
-    private void UpdateUI()
+    
+    private void UpdateSliders()
     {
-        UpdateSimulationButtonText();
+        updateIntervalSlider.value = _lifeController.UpdateInterval;
+        randomFillSlider.value = _lifeController.RandomFillShare;
         updateIntervalValueText.text = updateIntervalSlider.value.ToString("F2") + "s";
-        randomFillValueText.text = randomFillSlider.value.ToString("F0") + "%";
+        randomFillValueText.text = (randomFillSlider.value * 100).ToString("F0") + "%";
     }
 }

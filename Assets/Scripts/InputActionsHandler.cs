@@ -14,76 +14,76 @@ public class InputActionsHandler : MonoBehaviour
     public UnityEvent<Vector2> onMouseClick;
     public UnityEvent<Vector2> onMouseRightClick;
 
-    private InputAction toggleSimulationAction;
-    private InputAction rotateStructureAction;
-    private InputAction mouseClickAction;
-    private InputAction mouseRightClickAction;
-    private InputAction mousePositionAction;
-    private InputAction mouseScrollAction;
+    private InputAction _toggleSimulationAction;
+    private InputAction _rotateStructureAction;
+    private InputAction _mouseClickAction;
+    private InputAction _mouseRightClickAction;
+    private InputAction _mousePositionAction;
+    private InputAction _mouseScrollAction;
 
-    private Camera mainCamera;
-    private Vector2 lastMousePosition;
+    private Camera _mainCamera;
+    private Vector2 _lastMousePosition;
 
     private void Awake()
     {
-        mainCamera = Camera.main;
+        _mainCamera = Camera.main;
         var gameplayMap = inputActions.FindActionMap("Gameplay");
         
-        toggleSimulationAction = gameplayMap.FindAction("ToggleSimulation");
-        rotateStructureAction = gameplayMap.FindAction("RotateStructure");
-        mouseClickAction = gameplayMap.FindAction("MouseClick");
-        mouseRightClickAction = gameplayMap.FindAction("MouseRightClick");
-        mousePositionAction = gameplayMap.FindAction("MousePosition");
-        mouseScrollAction = gameplayMap.FindAction("MouseScroll");
+        _toggleSimulationAction = gameplayMap.FindAction("ToggleSimulation");
+        _rotateStructureAction = gameplayMap.FindAction("RotateStructure");
+        _mouseClickAction = gameplayMap.FindAction("MouseClick");
+        _mouseRightClickAction = gameplayMap.FindAction("MouseRightClick");
+        _mousePositionAction = gameplayMap.FindAction("MousePosition");
+        _mouseScrollAction = gameplayMap.FindAction("MouseScroll");
     }
 
     private void OnEnable()
     {
-        toggleSimulationAction.Enable();
-        rotateStructureAction.Enable();
+        _toggleSimulationAction.Enable();
+        _rotateStructureAction.Enable();
         
-        mouseClickAction.Enable();
-        mouseRightClickAction.Enable();
-        mousePositionAction.Enable();
-        mouseScrollAction.Enable();
+        _mouseClickAction.Enable();
+        _mouseRightClickAction.Enable();
+        _mousePositionAction.Enable();
+        _mouseScrollAction.Enable();
 
-        toggleSimulationAction.performed += OnToggleSimulation;
-        rotateStructureAction.performed += OnRotateStructure;
+        _toggleSimulationAction.performed += OnToggleSimulation;
+        _rotateStructureAction.performed += OnRotateStructure;
         
-        mouseClickAction.performed += OnMouseClick;
-        mouseRightClickAction.performed += OnMouseRightClick;
+        _mouseClickAction.performed += OnMouseClick;
+        _mouseRightClickAction.performed += OnMouseRightClick;
     }
 
     private void OnDisable()
     {
-        toggleSimulationAction.performed -= OnToggleSimulation;
-        rotateStructureAction.performed -= OnRotateStructure;
-        mouseClickAction.performed -= OnMouseClick;
-        mouseRightClickAction.performed -= OnMouseRightClick;
+        _toggleSimulationAction.performed -= OnToggleSimulation;
+        _rotateStructureAction.performed -= OnRotateStructure;
+        _mouseClickAction.performed -= OnMouseClick;
+        _mouseRightClickAction.performed -= OnMouseRightClick;
 
-        toggleSimulationAction.Disable();
-        rotateStructureAction.Disable();
+        _toggleSimulationAction.Disable();
+        _rotateStructureAction.Disable();
         
-        mouseClickAction.Disable();
-        mouseRightClickAction.Disable();
-        mousePositionAction.Disable();
-        mouseScrollAction.Disable();
+        _mouseClickAction.Disable();
+        _mouseRightClickAction.Disable();
+        _mousePositionAction.Disable();
+        _mouseScrollAction.Disable();
     }
 
     private void Update()
     {
-        Vector2 mousePosition = mousePositionAction.ReadValue<Vector2>();
-        if (mousePosition != lastMousePosition)
+        Vector2 mousePosition = _mousePositionAction.ReadValue<Vector2>();
+        if (mousePosition != _lastMousePosition)
         {
             onMouseMove?.Invoke(mousePosition);
-            lastMousePosition = mousePosition;
+            _lastMousePosition = mousePosition;
         }
 
-        if (mouseClickAction.ReadValue<float>() > 0.5f)
+        if (_mouseClickAction.ReadValue<float>() > 0.5f)
         {
             onMouseClick?.Invoke(mousePosition);
         }
-        else if (mouseRightClickAction.ReadValue<float>() > 0.5f)
+        else if (_mouseRightClickAction.ReadValue<float>() > 0.5f)
         {
             onMouseRightClick?.Invoke(mousePosition);
         }
@@ -111,7 +111,7 @@ public class InputActionsHandler : MonoBehaviour
 
     public Vector2 GetMouseWorldPosition()
     {
-        Vector2 mouseScreenPos = mousePositionAction.ReadValue<Vector2>();
-        return mainCamera.ScreenToWorldPoint(mouseScreenPos);
+        Vector2 mouseScreenPos = _mousePositionAction.ReadValue<Vector2>();
+        return _mainCamera.ScreenToWorldPoint(mouseScreenPos);
     }
 }

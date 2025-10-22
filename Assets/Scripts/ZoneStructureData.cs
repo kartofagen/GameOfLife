@@ -21,7 +21,7 @@ public class ZoneStructureData : ScriptableObject
     public Color zoneColor = new Color(1f, 0f, 0f, 0.3f);
     
     [System.NonSerialized]
-    public bool[,] cells;
+    public bool[,] Cells;
 
     public void InitializeCells()
     {
@@ -31,7 +31,7 @@ public class ZoneStructureData : ScriptableObject
         }
         else
         {
-            cells = new bool[width, height];
+            Cells = new bool[width, height];
         }
     }
 
@@ -47,15 +47,15 @@ public class ZoneStructureData : ScriptableObject
                 width = row.Trim().Length;
         }
         
-        cells = new bool[width, height];
+        Cells = new bool[width, height];
         
-        for (int y = 0; y < height; y++)
+        for (int y = 0; y < height; ++y)
         {
             string row = rows[height - 1 - y].Trim();
-            for (int x = 0; x < row.Length; x++)
+            for (int x = 0; x < row.Length; ++x)
             {
                 char c = row[x];
-                cells[x, y] = (c == 'X' || c == 'x' || c == '1');
+                Cells[x, y] = (c == 'X' || c == 'x' || c == '1');
             }
         }
     }
@@ -67,16 +67,16 @@ public class ZoneStructureData : ScriptableObject
         Debug.Log($"Zone Structure: {structureName}\nSize: {width}x{height}\nPattern:\n{PatternToString()}");
     }
 
-    public string PatternToString()
+    private string PatternToString()
     {
-        if (cells == null) InitializeCells();
+        if (Cells == null) InitializeCells();
         
         string result = "";
-        for (int y = height - 1; y >= 0; y--)
+        for (int y = height - 1; y >= 0; --y)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < width; ++x)
             {
-                result += cells[x, y] ? "X" : ".";
+                result += Cells[x, y] ? "X" : ".";
             }
             result += "\n";
         }
